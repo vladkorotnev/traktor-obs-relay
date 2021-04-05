@@ -1,0 +1,125 @@
+<html>
+    <head>
+        <title>History Widget</title>
+        <link rel="preconnect" href="https://fonts.gstatic.com">
+        <link href="https://fonts.googleapis.com/css2?family=RocknRoll+One&display=swap" rel="stylesheet">
+        <style type="text/css">
+            body {
+                font-family: 'RocknRoll One', sans-serif;
+                background: rgba(0,0,0,255);
+                color: white;
+            }
+
+            .header {
+                display: inline-block;
+                font-size: 18px;
+                padding: 4px 10px;
+                border-radius: 3px;
+                transform: skewX(-10deg);
+                background-color: darkred;
+                margin: 10px;
+            }
+
+            .header > span {
+                transform: skewX(10deg);
+            }
+
+            #overlay {
+                position: relative;
+            }
+
+            #overlay::before {
+                background-image: linear-gradient( top, 
+                        rgba( 0, 0, 0, 1 ) 0%, 
+                        rgba( 0, 0, 0, 0 ) 100% );
+                background-image: -webkit-linear-gradient( top, 
+                        rgba( 0, 0, 0, 1 ) 0%, 
+                        rgba( 0, 0, 0, 0 ) 25% );
+                content: "\00a0";
+                height: 100%;
+                position: absolute;
+                width: 100%;
+            }
+
+            .track > span {
+                display: block;
+            }
+
+            .title {
+                font-size: 24px;
+            }
+            .artist {
+                font-size: 22px;
+                color: #ccc;
+            }
+
+            .tracks {
+                overflow-y: hidden;
+                /*height: 100%;*/
+                max-height: 90%;
+                flex-wrap: nowrap;
+                width: 100%;
+                display: flex;
+                flex-direction: column-reverse;
+            }
+
+            .track {
+                max-height: 100%;
+                opacity: 1;
+                transition: all;
+                transition-duration: 1s;
+                transition-timing-function: linear;
+                white-space: nowrap;
+                margin-top: 10px;
+            }
+            .track.adding {
+                max-height: 0;
+                opacity: 0;
+                overflow: visible;
+                margin-top: 0;
+                transition: all;
+                transition-duration: 1s;
+                transition-timing-function: linear;
+            }
+        </style>
+        <script type="text/javascript">
+            function pushTrack(meta) {
+                let container = document.getElementById("tracks");
+
+                let row = document.createElement("div");
+                row.classList = "track adding";
+
+                let titleEl = document.createElement("span");
+                titleEl.classList = "title";
+                titleEl.innerText = meta.title;
+                row.appendChild(titleEl);
+
+                let artistEl = document.createElement("span");
+                artistEl.classList = "artist";
+                artistEl.innerText = meta.artist;
+                row.appendChild(artistEl);
+                
+                if(container.firstChild) {
+                    container.insertBefore(row, container.firstChild);
+                }
+                else {
+                    container.appendChild(row);
+                }
+
+                setTimeout(() => {
+                    row.classList = "track";
+                }, 1);
+            }
+
+            // TODO: connect to server and display updates
+        </script>
+    </head>
+    <body>
+        <div class="header"><span>Previous</span></div>
+        <div id="overlay">
+            <div class="tracks" id="tracks">
+                <!-- tracks will go here -->
+            </div>
+        </div>
+    </body>
+</html>
