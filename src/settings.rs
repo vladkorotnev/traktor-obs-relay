@@ -14,8 +14,6 @@ pub struct HttpSettings {
 pub struct MixingSettings {
     pub deck_list: Vec<Deck>,
     pub deck_channel_map: HashMap<Deck, Channel>,
-    pub primary_decks: Vec<Deck>,
-    pub deck_fallback: bool,
 }
 
 #[derive(Debug, Deserialize)]

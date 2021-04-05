@@ -8,6 +8,7 @@
                 font-family: 'RocknRoll One', sans-serif;
                 background: rgba(0,0,0,255);
                 color: white;
+                overflow: hidden;
             }
 
             .header {
@@ -17,6 +18,7 @@
                 border-radius: 3px;
                 transform: skewX(-10deg);
                 background-color: darkred;
+                margin-bottom: 6px;
             }
 
             .header > span {
@@ -59,10 +61,11 @@
                 margin-left: 100%;
             }
         </style>
+        <script type="text/javascript" src="api.js"></script>
         <script type="text/javascript">
-            function popTrack() {
+            function popTrack(meta) {
                 let container = document.getElementById("tracks");
-                let x = container.firstElementChild;
+                let x = document.querySelector('.track[data-filepath="'+meta.filePath.replace(/\\/g,"/")+'"]');
                 if(x) {
                     x.classList = "track removing";
                     setTimeout(() => {
@@ -76,6 +79,7 @@
 
                 let row = document.createElement("div");
                 row.classList = "track adding";
+                row.setAttribute("data-filepath", meta.filePath.replace(/\\/g,"/"));
 
                 let titleEl = document.createElement("span");
                 titleEl.classList = "title";
@@ -91,11 +95,33 @@
 
                 setTimeout(() => {
                     row.classList = "track";
-                }, 1);
+                }, 5);
+            }
+
+            var tracks = {};
+            function watchLoop() {
+                query()
+                    .then((info) => {
+                        let newTracks = Object.fromEntries( info.songsOnAir.map(x => [x.filePath, x]) );
+
+                        let newPaths = Object.keys(newTracks);
+                        let oldPaths = Object.keys(tracks);
+
+                        let goneTracks = oldPaths.filter(path => newPaths.indexOf(path) == -1).map(x => tracks[x]);
+                        let addedTracks = newPaths.filter(path => oldPaths.indexOf(path) == -1).map(x => newTracks[x]);
+
+                        goneTracks.forEach(element => popTrack(element));
+                        addedTracks.forEach(element => pushTrack(element));
+
+                        tracks = newTracks;
+                    })
+                    .finally(() => {
+                        setTimeout(watchLoop, 2000);
+                    })
             }
         </script>
     </head>
-    <body>
+    <body onload="watchLoop()">
         <div class="header"><span>Now Playing</span></div>
         <div class="tracks" id="tracks">
         </div>

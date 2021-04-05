@@ -55,8 +55,8 @@
 
             .tracks {
                 overflow-y: hidden;
-                /*height: 100%;*/
-                max-height: 90%;
+                height: 80%;
+                max-height: 80%;
                 flex-wrap: nowrap;
                 width: 100%;
                 display: flex;
@@ -82,12 +82,14 @@
                 transition-timing-function: linear;
             }
         </style>
+        <script type="text/javascript" src="api.js"></script>
         <script type="text/javascript">
             function pushTrack(meta) {
                 let container = document.getElementById("tracks");
 
                 let row = document.createElement("div");
                 row.classList = "track adding";
+                row.setAttribute("data-filepath", meta.filePath);
 
                 let titleEl = document.createElement("span");
                 titleEl.classList = "title";
@@ -111,10 +113,28 @@
                 }, 1);
             }
 
-            // TODO: connect to server and display updates
+            var tracks = {};
+            function watchLoop() {
+                query()
+                    .then((info) => {
+                        let newTracks = Object.fromEntries( info.songsOnAir.map(x => [x.filePath, x]) );
+
+                        let newPaths = Object.keys(newTracks);
+                        let oldPaths = Object.keys(tracks);
+
+                        let goneTracks = oldPaths.filter(path => newPaths.indexOf(path) == -1).map(x => tracks[x]);
+
+                        goneTracks.forEach(element => pushTrack(element));
+
+                        tracks = newTracks;
+                    })
+                    .finally(() => {
+                        setTimeout(watchLoop, 2000);
+                    })
+            }
         </script>
     </head>
-    <body>
+    <body onload="watchLoop()">
         <div class="header"><span>Previous</span></div>
         <div id="overlay">
             <div class="tracks" id="tracks">
