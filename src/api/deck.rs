@@ -1,50 +1,69 @@
-
-#[derive(Deserialize, Clone, Debug, Default)]
-#[serde(rename_all = "camelCase")]
+#[derive(Deserialize, Clone, Debug, Default, Serialize)]
+#[serde(rename_all = "camelCase", default)]
 pub struct DeckStatus {
     pub file_path: String,
-    pub title: Option<String>,
-    pub artist: Option<String>,
-    pub album: Option<String>,
-    pub genre: Option<String>,
-    pub comment: Option<String>,
-    pub comment2: Option<String>,
-    pub label: Option<String>,
-    pub mix: Option<String>,
-    pub remixer: Option<String>,
-    pub key: i32,
+    pub title: String,
+    pub artist: String,
+    pub album: String,
+    pub genre: String,
+    pub comment: String,
+    pub comment2: String,
+    pub label: String,
+    pub mix: String,
+    pub remixer: String,
+    pub key: String,
     pub key_text: String,
-    pub grid_offset: i32,
-    pub track_length: i32,
-    pub elapsed_time: i32,
-    pub next_cue_pos: Option<i32>,
-    pub bpm: u32,
-    pub tempo: u32,
-    pub resulting_key: u32,
+    pub grid_offset: f32,
+    pub track_length: f32,
+    pub elapsed_time: f32,
+    #[serde(default)]
+    pub next_cue_pos: Option<f32>,
+    pub bpm: f32,
+    pub tempo: f32,
+    pub resulting_key: String,
     pub is_playing: bool,
     pub is_synced: bool,
-    pub is_key_lock_on: bool
+    pub is_key_lock_on: bool,
 }
 
 impl DeckStatus {
     pub fn update(&mut self, delta: DeckStatusUpdate) {
-        if let Some(time) = delta.elapsed_time { self.elapsed_time = time; }
-        if let Some(playing) = delta.is_playing { self.is_playing = playing; }
-        if let Some(sync) = delta.is_synced { self.is_synced = sync; }
-        if let Some(key) = delta.is_key_lock_on { self.is_key_lock_on = key; }
-        if let Some(tempo) = delta.tempo { self.tempo = tempo; }
-        if let Some(res_key) = delta.resulting_key { self.resulting_key = res_key; }
+        if let Some(time) = delta.elapsed_time {
+            self.elapsed_time = time;
+        }
+        if let Some(playing) = delta.is_playing {
+            self.is_playing = playing;
+        }
+        if let Some(sync) = delta.is_synced {
+            self.is_synced = sync;
+        }
+        if let Some(key) = delta.is_key_lock_on {
+            self.is_key_lock_on = key;
+        }
+        if let Some(tempo) = delta.tempo {
+            self.tempo = tempo;
+        }
+        if let Some(res_key) = delta.resulting_key {
+            self.resulting_key = res_key;
+        }
     }
 }
 
 #[derive(Deserialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct DeckStatusUpdate {
-    pub elapsed_time: Option<i32>,
-    pub next_cue_pos: Option<i32>,
+    #[serde(default)]
+    pub elapsed_time: Option<f32>,
+    #[serde(default)]
+    pub next_cue_pos: Option<f32>,
+    #[serde(default)]
     pub is_playing: Option<bool>,
+    #[serde(default)]
     pub is_synced: Option<bool>,
+    #[serde(default)]
     pub is_key_lock_on: Option<bool>,
-    pub tempo: Option<u32>,
-    pub resulting_key: Option<u32>
+    #[serde(default)]
+    pub tempo: Option<f32>,
+    #[serde(default)]
+    pub resulting_key: Option<String>,
 }

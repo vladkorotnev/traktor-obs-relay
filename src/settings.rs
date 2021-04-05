@@ -1,15 +1,27 @@
+use super::api::{Channel, Deck};
 use config::{Config, ConfigError, File};
 use serde_derive::Deserialize;
+use std::collections::HashMap;
 
 #[derive(Debug, Deserialize)]
 pub struct HttpSettings {
     pub bind: String,
     pub port: u16,
+    pub webroot: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct MixingSettings {
+    pub deck_list: Vec<Deck>,
+    pub deck_channel_map: HashMap<Deck, Channel>,
+    pub primary_decks: Vec<Deck>,
+    pub deck_fallback: bool,
 }
 
 #[derive(Debug, Deserialize)]
 pub struct ServerSettings {
     pub http: HttpSettings,
+    pub mixing: MixingSettings,
 }
 
 lazy_static! {
