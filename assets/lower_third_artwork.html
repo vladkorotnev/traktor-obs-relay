@@ -1,0 +1,148 @@
+<html>
+    <head>
+        <title>Current Track Widget</title>
+        <link rel="preconnect" href="https://fonts.gstatic.com">
+        <link href="https://fonts.googleapis.com/css2?family=RocknRoll+One&display=swap" rel="stylesheet">
+        <style type="text/css">
+            body {
+                font-family: 'RocknRoll One', sans-serif;
+                background: rgba(0,0,0,255);
+                color: white;
+                overflow: hidden;
+            }
+
+            .header {
+                display: inline-block;
+                font-size: 18px;
+                padding: 4px 10px;
+                border-radius: 3px;
+                transform: skewX(-10deg);
+                background-color: darkred;
+                margin-bottom: 6px;
+            }
+
+            .header > span {
+                transform: skewX(10deg);
+            }
+
+            .title {
+                font-size: 24px;
+                display: block;
+            }
+            .artist {
+                font-size: 22px;
+                color: #ccc;
+                display: block;
+            }
+
+            .tracks {
+                display: flex;
+            }
+
+            .track {
+                flex-grow: 1.0;
+                max-width: 100%;
+                opacity: 1;
+                transition: all;
+                transition-duration: 1s;
+                transition-timing-function: cubic-bezier(0.075, 0.82, 0.165, 1);
+                white-space: nowrap;
+                margin-left: 0;
+            }
+
+            .track.removing {
+                max-width: 0;
+                opacity: 0;
+                overflow: visible;
+            }
+            .track.adding {
+                margin-left: 100%;
+                opacity: 0;
+            }
+
+            .track > .meta {
+                display: inline-block;
+                margin-left: 5px;
+                position: relative;
+                bottom: 25%;
+            }
+
+            .track > .cover {
+                max-height: 100px;
+            }
+        </style>
+        <script type="text/javascript" src="api.js"></script>
+        <script type="text/javascript">
+            function popTrack(meta) {
+                let container = document.getElementById("tracks");
+                let x = document.querySelector('.track[data-filepath="'+meta.filePath.replace(/\\/g,"/")+'"]');
+                if(x) {
+                    x.classList = "track removing";
+                    setTimeout(() => {
+                        container.removeChild(x);
+                    }, 1001);
+                }
+            }
+
+            function pushTrack(meta) {
+                let container = document.getElementById("tracks");
+
+                let row = document.createElement("div");
+                row.classList = "track adding";
+                row.setAttribute("data-filepath", meta.filePath.replace(/\\/g,"/"));
+
+                let imgEl = document.createElement("img");
+                imgEl.classList = "cover";
+                imgEl.src = getArtUrl(meta);
+                row.appendChild(imgEl);
+
+                let contEl = document.createElement("div");
+                contEl.classList = "meta";
+                row.appendChild(contEl);
+
+                let titleEl = document.createElement("span");
+                titleEl.classList = "title";
+                titleEl.innerText = meta.title;
+                contEl.appendChild(titleEl);
+
+                let artistEl = document.createElement("span");
+                artistEl.classList = "artist";
+                artistEl.innerText = meta.artist;
+                contEl.appendChild(artistEl);
+                
+                container.appendChild(row);
+
+                setTimeout(() => {
+                    row.classList = "track";
+                }, 5);
+            }
+
+            var tracks = {};
+            function watchLoop() {
+                query()
+                    .then((info) => {
+                        let newTracks = Object.fromEntries( info.songsOnAir.map(x => [x.filePath, x]) );
+
+                        let newPaths = Object.keys(newTracks);
+                        let oldPaths = Object.keys(tracks);
+
+                        let goneTracks = oldPaths.filter(path => newPaths.indexOf(path) == -1).map(x => tracks[x]);
+                        let addedTracks = newPaths.filter(path => oldPaths.indexOf(path) == -1).map(x => newTracks[x]);
+
+                        goneTracks.forEach(element => popTrack(element));
+                        addedTracks.forEach(element => pushTrack(element));
+
+                        tracks = newTracks;
+                    })
+                    .finally(() => {
+                        setTimeout(watchLoop, 2000);
+                    })
+            }
+        </script>
+    </head>
+    <body onload="watchLoop()">
+        <div class="header"><span>Now Playing</span></div>
+        <div class="tracks" id="tracks">
+        </div>
+    </body>
+</html>

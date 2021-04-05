@@ -7,12 +7,14 @@ extern crate serde;
 extern crate serde_derive;
 #[macro_use]
 extern crate lazy_static;
-extern crate chrono;
+extern crate id3;
+extern crate metaflac;
 
 use rouille::Response;
 use std::{
     collections::HashMap,
     io,
+    path::Path,
     sync::{Arc, RwLock},
 };
 
@@ -84,8 +86,9 @@ fn main() {
 
                 (POST) (/deckLoaded/{id: Deck}) => {
                     info!("Loaded deck {}", id);
-                    let new_status: DeckStatus = try_or_400!(rouille::input::json_input(request));
-                    info!("Loaded deck {}: {:?}", id, new_status);
+                    let mut new_status: DeckStatus = try_or_400!(rouille::input::json_input(request));
+                    new_status.deck = Some(id.clone());
+                    info!("Loaded deck {} {:?}", id, new_status);
                     DECK_STATUS.write().expect("RwLock failed").insert(id, new_status);
                     Response::empty_204()
                 },
@@ -143,6 +146,49 @@ fn main() {
                         bpm,
                         songs_on_air
                     })
+                },
+
+                (GET) (/artwork/{deck_id: Deck}) => {
+                    if let Some(deck) = DECK_STATUS.read().expect("RwLock failed").get(&deck_id) {
+                        let fpath = &deck.file_path;
+                        info!("Get artwork of deck {}: {}", deck_id, fpath);
+                        let file_path = Path::new(&fpath);
+                        if !file_path.exists() {
+                            Response::empty_404()
+                        }
+                        else {
+                            if let Some(extz) = file_path.extension() {
+                                match extz.to_string_lossy().to_lowercase().as_str() {
+                                    "flac" => {
+                                        if let Ok(tags) = metaflac::Tag::read_from_path(file_path) {
+                                            if let Some(pic) = tags.pictures().nth(0) {
+                                                return Response::from_data(pic.mime_type.clone(), pic.data.clone());
+                                            }
+                                        }
+
+                                        Response::empty_400()
+                                    },
+                                    "mp3" => {
+                                        if let Ok(tags) = id3::Tag::read_from_path(file_path) {
+                                            if let Some(pic) = tags.pictures().nth(0) {
+                                                return Response::from_data(pic.mime_type.clone(), pic.data.clone());
+                                            }
+                                        }
+
+                                        Response::empty_400()
+                                    },
+                                    _ => Response::empty_406()
+                                }
+                            }
+                            else {
+                                Response::empty_406()
+                            }
+                        }
+                    }
+                    else {
+                        error!("WTF is Deck {} ???", deck_id);
+                        Response::empty_404()
+                    }
                 },
 
                 _ => {

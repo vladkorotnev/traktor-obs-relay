@@ -16,3 +16,10 @@ function query() {
         xhr.send();
     });
 }
+
+function getArtUrl(meta) {
+    if(meta.deck) {
+        return API_ROOT+"artwork/"+meta.deck;
+    }
+    return "";
+}

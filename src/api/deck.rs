@@ -24,6 +24,8 @@ pub struct DeckStatus {
     pub is_playing: bool,
     pub is_synced: bool,
     pub is_key_lock_on: bool,
+    #[serde(default)]
+    pub deck: Option<String>,
 }
 
 impl DeckStatus {
