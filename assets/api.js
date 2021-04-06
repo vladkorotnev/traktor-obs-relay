@@ -21,7 +21,7 @@ function query() {
 
 function getArtUrl(meta) {
     if(meta.deck) {
-        return API_ROOT+ART_API+meta.deck;
+        return API_ROOT+ART_API+meta.deck+"?nocache="+Date.now();
     }
     return "";
 }

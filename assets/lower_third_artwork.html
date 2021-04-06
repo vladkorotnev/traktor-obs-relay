@@ -3,74 +3,7 @@
         <title>Current Track Widget</title>
         <link rel="preconnect" href="https://fonts.gstatic.com">
         <link href="https://fonts.googleapis.com/css2?family=RocknRoll+One&display=swap" rel="stylesheet">
-        <style type="text/css">
-            body {
-                font-family: 'RocknRoll One', sans-serif;
-                background: rgba(0,0,0,255);
-                color: white;
-                overflow: hidden;
-            }
-
-            .header {
-                display: inline-block;
-                font-size: 18px;
-                padding: 4px 10px;
-                border-radius: 3px;
-                transform: skewX(-10deg);
-                background-color: darkred;
-                margin-bottom: 6px;
-            }
-
-            .header > span {
-                transform: skewX(10deg);
-            }
-
-            .title {
-                font-size: 24px;
-                display: block;
-            }
-            .artist {
-                font-size: 22px;
-                color: #ccc;
-                display: block;
-            }
-
-            .tracks {
-                display: flex;
-            }
-
-            .track {
-                flex-grow: 1.0;
-                max-width: 100%;
-                opacity: 1;
-                transition: all;
-                transition-duration: 1s;
-                transition-timing-function: cubic-bezier(0.075, 0.82, 0.165, 1);
-                white-space: nowrap;
-                margin-left: 0;
-            }
-
-            .track.removing {
-                max-width: 0;
-                opacity: 0;
-                overflow: visible;
-            }
-            .track.adding {
-                margin-left: 100%;
-                opacity: 0;
-            }
-
-            .track > .meta {
-                display: inline-block;
-                margin-left: 5px;
-                position: relative;
-                bottom: 25%;
-            }
-
-            .track > .cover {
-                max-height: 100px;
-            }
-        </style>
+        <link href="lower_third.css" rel="stylesheet">
         <script type="text/javascript" src="api-ws.js"></script>
         <script type="text/javascript" src="api.js"></script>
         <script type="text/javascript">
@@ -115,9 +48,9 @@
                 
                 container.appendChild(row);
 
-                setTimeout(() => {
+                requestAnimationFrame(() => {
                     row.classList = "track";
-                }, 5);
+                });
             }
 
             // Called when bpm changes
