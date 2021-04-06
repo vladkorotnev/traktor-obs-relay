@@ -10,6 +10,8 @@ pub struct HttpSettings {
     pub bind: String,
     /// Port to bind to
     pub port: u16,
+    /// Websocket port
+    pub ws_port: u16,
     /// Webroot to throw unmatched requests at
     pub webroot: String,
 }
