@@ -3,13 +3,13 @@ use futures_channel::mpsc::{unbounded, UnboundedSender};
 use futures_util::{future, pin_mut, stream::TryStreamExt, StreamExt};
 use std::collections::HashMap;
 use std::net::SocketAddr;
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, RwLock};
 use std::thread::spawn;
 use tokio::net::{TcpListener, TcpStream};
 use tokio_tungstenite::tungstenite::protocol::Message;
 
 type Tx = UnboundedSender<Message>;
-type PeerMap = Arc<Mutex<HashMap<SocketAddr, Tx>>>;
+type PeerMap = Arc<RwLock<HashMap<SocketAddr, Tx>>>;
 
 pub fn spawn_ws() {
     spawn(|| {
@@ -18,7 +18,7 @@ pub fn spawn_ws() {
 }
 
 lazy_static! {
-    static ref SUBSCRIBERS: PeerMap = PeerMap::new(Mutex::new(HashMap::new()));
+    static ref SUBSCRIBERS: PeerMap = PeerMap::new(RwLock::new(HashMap::new()));
 }
 
 #[tokio::main]
@@ -45,7 +45,7 @@ async fn handle_connection(raw_stream: TcpStream, addr: SocketAddr) {
     println!("WebSocket connection established: {}", addr);
 
     let (tx, rx) = unbounded();
-    SUBSCRIBERS.lock().unwrap().insert(addr, tx);
+    SUBSCRIBERS.write().unwrap().insert(addr, tx);
 
     let (outgoing, incoming) = ws_stream.split();
 
@@ -57,13 +57,13 @@ async fn handle_connection(raw_stream: TcpStream, addr: SocketAddr) {
     future::select(handle_incoming, receive_from_others).await;
 
     println!("{} disconnected", &addr);
-    SUBSCRIBERS.lock().unwrap().remove(&addr);
+    SUBSCRIBERS.write().unwrap().remove(&addr);
 }
 
 pub fn ws_push(msg: &impl serde::Serialize) {
     let ser = serde_json::to_string(msg).unwrap();
     info!("Broadcast WS msg: {}", ser);
-    let peers = SUBSCRIBERS.lock().unwrap();
+    let peers = SUBSCRIBERS.read().unwrap();
 
     let broadcast_recipients = peers.iter().map(|(_, ws_sink)| ws_sink);
 

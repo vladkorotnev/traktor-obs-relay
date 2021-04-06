@@ -1,12 +1,14 @@
 use super::{
-    api::{deck::*, Deck},
-    settings, CHANNEL_STATUS, DECK_STATUS,
+    api::{channel::*, deck::*, Channel, Deck},
+    settings,
 };
+use std::collections::HashMap;
 use std::path::Path;
 
-pub fn get_songs_on_air() -> Vec<DeckStatus> {
-    let cur_decks = DECK_STATUS.read().expect("RwLock failed");
-    let cur_chans = CHANNEL_STATUS.read().expect("RwLock failed");
+pub fn get_songs_on_air(
+    cur_decks: &HashMap<Deck, DeckStatus>,
+    cur_chans: &HashMap<Channel, ChannelStatus>,
+) -> Vec<DeckStatus> {
     let setting = &settings::ServerSettings::shared().mixing;
     let deck_list = setting.deck_list.clone();
 
@@ -37,8 +39,8 @@ pub struct Artwork {
     pub data: Vec<u8>,
 }
 
-pub fn get_deck_artwork(deck_id: Deck) -> Option<Artwork> {
-    if let Some(deck) = DECK_STATUS.read().expect("RwLock failed").get(&deck_id) {
+pub fn get_deck_artwork(deck_id: Deck, decks: &HashMap<Deck, DeckStatus>) -> Option<Artwork> {
+    if let Some(deck) = decks.get(&deck_id) {
         let fpath = &deck.file_path;
         info!("Get artwork of deck {}: {}", deck_id, fpath);
         let file_path = Path::new(&fpath);
