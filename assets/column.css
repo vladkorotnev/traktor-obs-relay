@@ -49,7 +49,7 @@ body {
 }
 
 .tracks {
-    overflow-y: hidden;
+    overflow: hidden;
     height: 80%;
     max-height: 80%;
     flex-wrap: nowrap;
