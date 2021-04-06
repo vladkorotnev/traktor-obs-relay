@@ -2,6 +2,7 @@
 [http]
 bind = "127.0.0.1"
 port = 8080
+ws_port = 9090
 # Place with html files
 webroot = "./assets"
 

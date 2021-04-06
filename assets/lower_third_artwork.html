@@ -71,6 +71,7 @@
                 max-height: 100px;
             }
         </style>
+        <script type="text/javascript" src="api-ws.js"></script>
         <script type="text/javascript" src="api.js"></script>
         <script type="text/javascript">
             // Called when track ends playing
@@ -117,6 +118,10 @@
                 setTimeout(() => {
                     row.classList = "track";
                 }, 5);
+            }
+
+            // Called when bpm changes
+            function onBpmChanged(bpm) {
             }
         </script>
     </head>

@@ -5,10 +5,13 @@ extern crate log;
 extern crate serde;
 #[macro_use]
 extern crate serde_derive;
+extern crate serde_json;
 #[macro_use]
 extern crate lazy_static;
 extern crate id3;
 extern crate metaflac;
+extern crate tokio;
+extern crate tokio_tungstenite;
 
 use std::{
     collections::HashMap,
@@ -17,7 +20,9 @@ use std::{
 
 mod api;
 mod http_server;
+mod logic;
 mod settings;
+mod ws_server;
 
 use api::{channel::*, deck::*, master_clock::*, Channel, Deck};
 
@@ -48,6 +53,7 @@ fn main() {
     }
 
     http_server::spawn_http();
+    ws_server::spawn_ws();
 
     loop {
         std::thread::sleep(std::time::Duration::from_secs(u64::MAX));

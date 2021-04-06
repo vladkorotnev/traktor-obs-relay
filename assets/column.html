@@ -82,6 +82,7 @@
                 transition-timing-function: linear;
             }
         </style>
+        <script type="text/javascript" src="api-ws.js"></script>
         <script type="text/javascript" src="api.js"></script>
         <script type="text/javascript">
             // Called when track ends playing
@@ -116,6 +117,10 @@
 
             // Called when new track plays
             function pushTrack() {/*noop*/}
+
+            // Called when bpm changes
+            function onBpmChanged(bpm) {
+            }
         </script>
     </head>
     <body>

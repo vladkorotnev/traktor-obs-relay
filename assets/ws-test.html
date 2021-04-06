@@ -1,0 +1,25 @@
+<html>
+    <head>
+        <title>WS test</title>
+        <script type="text/javascript" src="api-ws.js"></script> 
+        <script type="text/javascript" src="api.js"></script>
+        <script type="text/javascript">
+            // Called when track ends playing
+            function popTrack(meta) {
+                console.log("Pop track:", meta);
+            }
+
+            // Called when new track plays
+            function pushTrack(meta) {
+                console.log("Push track:", meta);
+            }
+
+            // Called when bpm changes
+            function onBpmChanged(bpm) {
+                console.log("Change bpm to", bpm);
+            }
+        </script>
+    </head>
+    <body>
+    </body>
+</html>

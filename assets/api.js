@@ -27,24 +27,41 @@ function getArtUrl(meta) {
 }
 
 var tracks = {};
+var oldBpm = 0;
+function processUpdates(info) {
+    if(!info) return;
+    if(info.songsOnAir) {
+        let newTracks = Object.fromEntries( info.songsOnAir.map(x => [x.filePath, x]) );
+
+        let newPaths = Object.keys(newTracks);
+        let oldPaths = Object.keys(tracks);
+
+        let goneTracks = oldPaths.filter(path => newPaths.indexOf(path) == -1).map(x => tracks[x]);
+        let addedTracks = newPaths.filter(path => oldPaths.indexOf(path) == -1).map(x => newTracks[x]);
+
+        goneTracks.forEach(element => popTrack(element));
+        addedTracks.forEach(element => pushTrack(element));
+
+        tracks = newTracks;
+    }
+    if(info.bpm && info.bpm != oldBpm) {
+        onBpmChanged(info.bpm);
+        oldBpm = info.bpm;
+    }
+}
+
 function watchLoop() {
     query()
         .then((info) => {
-            let newTracks = Object.fromEntries( info.songsOnAir.map(x => [x.filePath, x]) );
-
-            let newPaths = Object.keys(newTracks);
-            let oldPaths = Object.keys(tracks);
-
-            let goneTracks = oldPaths.filter(path => newPaths.indexOf(path) == -1).map(x => tracks[x]);
-            let addedTracks = newPaths.filter(path => oldPaths.indexOf(path) == -1).map(x => newTracks[x]);
-
-            goneTracks.forEach(element => popTrack(element));
-            addedTracks.forEach(element => pushTrack(element));
-
-            tracks = newTracks;
+            processUpdates(info);
         })
         .finally(() => {
-            setTimeout(watchLoop, CHECK_INTERVAL);
+            if(!window.hasWsPush) {
+                setTimeout(watchLoop, CHECK_INTERVAL);
+            }
+            else {
+                console.log("Websocket enabled, not rescheduling timer");
+            }
         })
 }
 

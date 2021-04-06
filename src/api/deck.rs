@@ -53,13 +53,15 @@ pub struct DeckStatus {
 }
 
 impl DeckStatus {
-    /// Update the status entry from a delta object
-    pub fn update(&mut self, delta: DeckStatusUpdate) {
+    /// Update the status entry from a delta object, returns whether the change affects the Now Playing status
+    pub fn update(&mut self, delta: DeckStatusUpdate) -> bool {
+        let mut rslt = false;
         if let Some(time) = delta.elapsed_time {
             self.elapsed_time = time;
         }
         if let Some(playing) = delta.is_playing {
             self.is_playing = playing;
+            rslt = true;
         }
         if let Some(sync) = delta.is_synced {
             self.is_synced = sync;
@@ -73,6 +75,7 @@ impl DeckStatus {
         if let Some(res_key) = delta.resulting_key {
             self.resulting_key = res_key;
         }
+        rslt
     }
 }
 
