@@ -1,6 +1,6 @@
 use super::*;
 
-/// Master clock update message
+/// Master clock status
 #[derive(Deserialize, Debug, Clone, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct MasterClock {

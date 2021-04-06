@@ -56,11 +56,22 @@ fn main() {
         drop(chan_status);
     }
 
+    std::thread::spawn(move || {
+        debug!("Starting http server thread");
+        start_http();
+    });
+
+    loop {
+        std::thread::sleep(std::time::Duration::from_secs(u64::MAX));
+    }
+}
+
+fn start_http() {
     let cfg = &settings::ServerSettings::shared().http;
     let host = &cfg.bind;
     let port = &cfg.port;
     let root = cfg.webroot.clone();
-    info!("Start API at {}:{} in {}", host, port, root);
+    info!("Start HTTP at {}:{} in {}", host, port, root);
 
     rouille::start_server(format!("{}:{}", host, port), move |request| {
         rouille::log(&request, io::stdout(), || {
