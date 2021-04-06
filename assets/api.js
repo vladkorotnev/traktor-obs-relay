@@ -1,5 +1,7 @@
 const API_ROOT = "http://127.0.0.1:8080/";
 const NOW_PLAYING_API = "nowPlaying";
+const ART_API = "artwork/";
+const CHECK_INTERVAL = 2000;
 
 function query() {
     return new Promise((resolve, reject) => {
@@ -19,7 +21,31 @@ function query() {
 
 function getArtUrl(meta) {
     if(meta.deck) {
-        return API_ROOT+"artwork/"+meta.deck;
+        return API_ROOT+ART_API+meta.deck;
     }
     return "";
 }
+
+var tracks = {};
+function watchLoop() {
+    query()
+        .then((info) => {
+            let newTracks = Object.fromEntries( info.songsOnAir.map(x => [x.filePath, x]) );
+
+            let newPaths = Object.keys(newTracks);
+            let oldPaths = Object.keys(tracks);
+
+            let goneTracks = oldPaths.filter(path => newPaths.indexOf(path) == -1).map(x => tracks[x]);
+            let addedTracks = newPaths.filter(path => oldPaths.indexOf(path) == -1).map(x => newTracks[x]);
+
+            goneTracks.forEach(element => popTrack(element));
+            addedTracks.forEach(element => pushTrack(element));
+
+            tracks = newTracks;
+        })
+        .finally(() => {
+            setTimeout(watchLoop, CHECK_INTERVAL);
+        })
+}
+
+window.onload = watchLoop;

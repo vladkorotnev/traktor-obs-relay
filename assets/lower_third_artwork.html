@@ -73,6 +73,7 @@
         </style>
         <script type="text/javascript" src="api.js"></script>
         <script type="text/javascript">
+            // Called when track ends playing
             function popTrack(meta) {
                 let container = document.getElementById("tracks");
                 let x = document.querySelector('.track[data-filepath="'+meta.filePath.replace(/\\/g,"/")+'"]');
@@ -84,6 +85,7 @@
                 }
             }
 
+            // Called when track starts playing
             function pushTrack(meta) {
                 let container = document.getElementById("tracks");
 
@@ -116,31 +118,9 @@
                     row.classList = "track";
                 }, 5);
             }
-
-            var tracks = {};
-            function watchLoop() {
-                query()
-                    .then((info) => {
-                        let newTracks = Object.fromEntries( info.songsOnAir.map(x => [x.filePath, x]) );
-
-                        let newPaths = Object.keys(newTracks);
-                        let oldPaths = Object.keys(tracks);
-
-                        let goneTracks = oldPaths.filter(path => newPaths.indexOf(path) == -1).map(x => tracks[x]);
-                        let addedTracks = newPaths.filter(path => oldPaths.indexOf(path) == -1).map(x => newTracks[x]);
-
-                        goneTracks.forEach(element => popTrack(element));
-                        addedTracks.forEach(element => pushTrack(element));
-
-                        tracks = newTracks;
-                    })
-                    .finally(() => {
-                        setTimeout(watchLoop, 2000);
-                    })
-            }
         </script>
     </head>
-    <body onload="watchLoop()">
+    <body>
         <div class="header"><span>Now Playing</span></div>
         <div class="tracks" id="tracks">
         </div>

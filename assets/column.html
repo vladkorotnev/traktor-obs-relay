@@ -84,7 +84,8 @@
         </style>
         <script type="text/javascript" src="api.js"></script>
         <script type="text/javascript">
-            function pushTrack(meta) {
+            // Called when track ends playing
+            function popTrack(meta) {
                 let container = document.getElementById("tracks");
 
                 let row = document.createElement("div");
@@ -113,28 +114,11 @@
                 }, 1);
             }
 
-            var tracks = {};
-            function watchLoop() {
-                query()
-                    .then((info) => {
-                        let newTracks = Object.fromEntries( info.songsOnAir.map(x => [x.filePath, x]) );
-
-                        let newPaths = Object.keys(newTracks);
-                        let oldPaths = Object.keys(tracks);
-
-                        let goneTracks = oldPaths.filter(path => newPaths.indexOf(path) == -1).map(x => tracks[x]);
-
-                        goneTracks.forEach(element => pushTrack(element));
-
-                        tracks = newTracks;
-                    })
-                    .finally(() => {
-                        setTimeout(watchLoop, 2000);
-                    })
-            }
+            // Called when new track plays
+            function pushTrack() {/*noop*/}
         </script>
     </head>
-    <body onload="watchLoop()">
+    <body>
         <div class="header"><span>Previous</span></div>
         <div id="overlay">
             <div class="tracks" id="tracks">
