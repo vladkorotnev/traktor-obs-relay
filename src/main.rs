@@ -46,21 +46,6 @@ fn main() {
         .init()
         .unwrap();
 
-    // preheat deck_status
-    {
-        let mut deck_status = DECK_STATUS.write().unwrap();
-        let deck_list = &settings::ServerSettings::shared().mixing.deck_list;
-        for deck_name in deck_list.iter() {
-            deck_status.insert(
-                String::from(deck_name),
-                DeckStatus {
-                    ..Default::default()
-                },
-            );
-        }
-        drop(deck_status);
-    }
-
     // preheat channel_status
     {
         let mut chan_status = CHANNEL_STATUS.write().unwrap();
@@ -140,7 +125,11 @@ fn main() {
                         }
                     });
 
-                    let songs_on_air: Vec<DeckStatus> = on_air_decks.map(|deck| cur_decks.get(deck) ).filter(|opt| opt.is_some()).map(|opt| opt.unwrap().clone() ).filter(|stat| stat.is_playing).collect();
+                    let songs_on_air: Vec<DeckStatus> = on_air_decks.map(|deck| cur_decks.get(deck) )
+                                                            .filter(|opt| opt.is_some())
+                                                            .map(|opt| opt.unwrap().clone() )
+                                                            .filter(|stat| stat.is_playing)
+                                                            .collect();
 
                     Response::json(&NowPlayingResponse {
                         bpm,
