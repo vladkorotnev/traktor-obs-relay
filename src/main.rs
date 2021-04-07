@@ -12,6 +12,7 @@ extern crate id3;
 extern crate metaflac;
 extern crate tokio;
 extern crate tokio_tungstenite;
+extern crate infer;
 
 use std::{
     collections::HashMap,
@@ -37,8 +38,10 @@ lazy_static! {
 }
 
 fn main() {
+    use std::str::FromStr;
+    let log_level = settings::ServerSettings::shared().log_level.clone().unwrap_or(String::from("Info"));
     simple_logger::SimpleLogger::new()
-        .with_level(log::LevelFilter::Debug)
+        .with_level(log::LevelFilter::from_str(&log_level).unwrap_or(log::LevelFilter::Info))
         .init()
         .unwrap();
 
@@ -47,6 +50,7 @@ fn main() {
         let mut chan_status = CHANNEL_STATUS.write().unwrap();
         let channel_map = &settings::ServerSettings::shared().mixing.deck_channel_map;
         for (_, channel) in channel_map.iter() {
+            trace!("Preheat channel matrix data {}", channel);
             chan_status.insert(*channel, ChannelStatus { is_on_air: true });
         }
         drop(chan_status);
@@ -56,6 +60,7 @@ fn main() {
     ws_server::spawn_ws();
 
     loop {
+        debug!("Freezing main thread for an eternity");
         std::thread::sleep(std::time::Duration::from_secs(u64::MAX));
     }
 }

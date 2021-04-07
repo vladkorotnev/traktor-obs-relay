@@ -470,6 +470,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "infer"
+version = "0.3.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0803735b9511d0956c68902a6513ca867819d6e43397adb6a5e903e2f09db734"
+
+[[package]]
 name = "input_buffer"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1365,6 +1371,7 @@ dependencies = [
  "futures-channel",
  "futures-util",
  "id3",
+ "infer",
  "lazy_static",
  "log 0.4.14",
  "metaflac",

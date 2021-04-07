@@ -9,6 +9,7 @@ pub fn get_songs_on_air(
     cur_decks: &HashMap<Deck, DeckStatus>,
     cur_chans: &HashMap<Channel, ChannelStatus>,
 ) -> Vec<DeckStatus> {
+    trace!("Get songs currently on air");
     let setting = &settings::ServerSettings::shared().mixing;
     let deck_list = setting.deck_list.clone();
 
@@ -23,6 +24,7 @@ pub fn get_songs_on_air(
             false
         }
     });
+    debug!("Decks on air: {:?}", on_air_decks);
 
     let songs_on_air: Vec<DeckStatus> = on_air_decks
         .map(|deck| cur_decks.get(deck))
@@ -39,12 +41,13 @@ pub struct Artwork {
     pub data: Vec<u8>,
 }
 
-pub fn get_deck_artwork(deck_id: Deck, decks: &HashMap<Deck, DeckStatus>) -> Option<Artwork> {
-    if let Some(deck) = decks.get(&deck_id) {
+pub fn get_deck_artwork(deck_id: &Deck, decks: &HashMap<Deck, DeckStatus>) -> Option<Artwork> {
+    if let Some(deck) = decks.get(deck_id) {
         let fpath = &deck.file_path;
-        info!("Get artwork of deck {}: {}", deck_id, fpath);
+        trace!("Get artwork of deck {}: {}", deck_id, fpath);
         let file_path = Path::new(&fpath);
         if !file_path.exists() {
+            error!("Deck {} is playing a nonexistent file {}", deck_id, file_path.display());
             None
         } else {
             if let Some(extz) = file_path.extension() {
@@ -56,7 +59,11 @@ pub fn get_deck_artwork(deck_id: Deck, decks: &HashMap<Deck, DeckStatus>) -> Opt
                                     mime_type: pic.mime_type.clone(),
                                     data: pic.data.clone(),
                                 });
+                            } else {
+                                error!("Could not find or read picture in FLAC file: {}", file_path.display());
                             }
+                        } else {
+                            error!("Could not read metadata in FLAC file: {}", file_path.display());
                         }
 
                         None
@@ -68,18 +75,27 @@ pub fn get_deck_artwork(deck_id: Deck, decks: &HashMap<Deck, DeckStatus>) -> Opt
                                     mime_type: pic.mime_type.clone(),
                                     data: pic.data.clone(),
                                 });
+                            } else {
+                                error!("Could not find or read picture in MP3 file: {}", file_path.display());
                             }
+                        } else {
+                            error!("Could not read metadata in MP3 file: {}", file_path.display());
                         }
 
                         None
                     }
-                    _ => None,
+                    _ => {
+                        error!("Unsupported file extension to extract artwork from: {}", extz.to_string_lossy());
+                        None
+                    },
                 }
             } else {
+                error!("Could not determine extension of file {}", file_path.display());
                 None
             }
         }
     } else {
+        error!("Could not get deck {}", deck_id);
         None
     }
 }

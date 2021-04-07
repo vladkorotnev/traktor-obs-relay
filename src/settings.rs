@@ -23,6 +23,8 @@ pub struct MixingSettings {
     pub deck_list: Vec<Deck>,
     /// Map of decks letters to channel numbers
     pub deck_channel_map: HashMap<Deck, Channel>,
+    /// Default cover art image path
+    pub default_cover: String,
 }
 
 /// Common settings
@@ -30,6 +32,7 @@ pub struct MixingSettings {
 pub struct ServerSettings {
     pub http: HttpSettings,
     pub mixing: MixingSettings,
+    pub log_level: Option<String>
 }
 
 lazy_static! {
@@ -50,6 +53,7 @@ impl ServerSettings {
 
     /// Read the settings file at a specified location
     pub fn read(fpath: &str) -> Result<Self, ConfigError> {
+        debug!("Reading settings file from {}", fpath);
         let mut s = Config::new();
         s.merge(File::with_name(fpath))?;
         s.try_into()

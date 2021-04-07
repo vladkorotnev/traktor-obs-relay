@@ -1,3 +1,6 @@
+# Uncomment for verbose logging (a lot of text!)
+#log_level = "Trace"
+
 # HTTP API setting
 [http]
 bind = "127.0.0.1"
@@ -12,3 +15,5 @@ webroot = "./assets"
 deck_list = [ "A", "B", "C", "D" ]
 # Deck assignments to channels
 deck_channel_map = { A = 1, B = 2, C = 3, D = 4 }
+# Default cover art file name
+default_cover = "./assets/default.jpg"

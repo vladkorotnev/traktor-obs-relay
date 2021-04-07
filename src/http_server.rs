@@ -4,7 +4,6 @@ use super::{
 };
 use rouille::Response;
 use std::collections::HashMap;
-use std::io;
 
 pub fn spawn_http() {
     std::thread::spawn(move || {
@@ -48,25 +47,52 @@ impl BpmResponse {
     }
 }
 
+fn format_time(duration: std::time::Duration) -> String {
+    let secs_part = match duration.as_secs().checked_mul(1_000_000_000) {
+        Some(v) => v,
+        None => return format!("{}s", duration.as_secs() as f64),
+    };
+
+    let duration_in_ns = secs_part + u64::from(duration.subsec_nanos());
+
+    if duration_in_ns < 1_000 {
+        format!("{}ns", duration_in_ns)
+    } else if duration_in_ns < 1_000_000 {
+        format!("{:.1}us", duration_in_ns as f64 / 1_000.0)
+    } else if duration_in_ns < 1_000_000_000 {
+        format!("{:.1}ms", duration_in_ns as f64 / 1_000_000.0)
+    } else {
+        format!("{:.1}s", duration_in_ns as f64 / 1_000_000_000.0)
+    }
+}
+
 fn start_http() {
-    let cfg = &settings::ServerSettings::shared().http;
-    let host = &cfg.bind;
-    let port = &cfg.port;
-    let root = cfg.webroot.clone();
+    let cfg = &settings::ServerSettings::shared();
+    let host = &cfg.http.bind;
+    let port = &cfg.http.port;
+    let root = cfg.http.webroot.clone();
+    let default_cover = cfg.mixing.default_cover.clone();
     info!("Start HTTP at {}:{} in {}", host, port, root);
 
+    let log_ok = |req: &rouille::Request, resp: &Response, elapsed: std::time::Duration| {
+        info!("{} {}: rslt={} time={}", req.method(), req.raw_url(), resp.status_code, format_time(elapsed));
+    };
+    let log_err = |req: &rouille::Request, _elap: std::time::Duration| {
+        error!("Handler panicked: {} {}", req.method(), req.raw_url());
+    };
+
     rouille::start_server(format!("{}:{}", host, port), move |request| {
-        rouille::log(&request, io::stdout(), || {
+        rouille::log_custom(&request, log_ok, log_err, || {
             router!(request,
                 (GET) (/) => {
                     Response::text("Point traktor API or OBS here")
                 },
 
                 (POST) (/deckLoaded/{id: Deck}) => {
-                    info!("Loaded deck {}", id);
+                    trace!("Deck load API call");
                     let mut new_status: DeckStatus = try_or_400!(rouille::input::json_input(request));
                     new_status.deck = Some(id.clone());
-                    info!("Loaded deck {} {:?}", id, new_status);
+                    debug!("Loaded deck {} {:?}", id, new_status);
                     let mut decks = DECK_STATUS.write().expect("RwLock failed");
                     decks.insert(id, new_status);
                     let chans = CHANNEL_STATUS.read().expect("RwLock failed");
@@ -76,8 +102,9 @@ fn start_http() {
                 },
 
                 (POST) (/updateDeck/{id: Deck}) => {
+                    trace!("Deck update API call");
                     let new_status: DeckStatusUpdate = try_or_400!(rouille::input::json_input(request));
-                    info!("Updated deck {}: {:?}", id, new_status);
+                    debug!("Updated deck {}: {:?}", id, new_status);
                     let mut decks = DECK_STATUS.write().expect("RwLock failed");
 
                     if let Some(deck) = decks.get_mut(&id) {
@@ -88,22 +115,24 @@ fn start_http() {
                         }
                     }
                     else {
-                        error!("WTF is Deck {} ???", id);
+                        error!("Deck {} is not known (yet) but update event was received!", id);
                     }
                     Response::empty_204()
                 },
 
                 (POST) (/updateMasterClock) => {
+                    trace!("Clock update API call");
                     let new_clock: MasterClock = try_or_400!(rouille::input::json_input(request));
-                    info!("Update clock {:?}", new_clock);
+                    debug!("Update clock {:?}", new_clock);
                     super::ws_server::ws_push(&BpmResponse::from(&new_clock));
                     *(MASTER_CLOCK.write().expect("RwLock failed")) = new_clock;
                     Response::empty_204()
                 },
 
                 (POST) (/updateChannel/{id: Channel}) => {
+                    trace!("Update channel API call");
                     let new_status: ChannelStatus = try_or_400!(rouille::input::json_input(request));
-                    info!("Update channel {}: {:?}",id, new_status);
+                    debug!("Update channel {}: {:?}",id, new_status);
                     let mut chans = CHANNEL_STATUS.write().expect("RwLock failed");
                     chans.insert(id, new_status);
                     let clock = MASTER_CLOCK.read().expect("RwLock failed");
@@ -114,6 +143,7 @@ fn start_http() {
                 },
 
                 (GET) (/nowPlaying) => {
+                    trace!("Now playing info API call");
                     let chans = CHANNEL_STATUS.read().expect("RwLock failed");
                     let clock = MASTER_CLOCK.read().expect("RwLock failed");
                     let decks = DECK_STATUS.read().expect("RwLock failed");
@@ -121,11 +151,37 @@ fn start_http() {
                 },
 
                 (GET) (/artwork/{deck_id: Deck}) => {
+                    trace!("Artwork get over HTTP");
                     let decks = DECK_STATUS.read().expect("RwLock failed");
 
-                    match super::logic::get_deck_artwork(deck_id, &decks) {
-                        None => Response::empty_404(),
-                        Some(art) => Response::from_data(art.mime_type, art.data)
+                    match super::logic::get_deck_artwork(&deck_id, &decks) {
+                        None => {
+                            let file_path = std::path::Path::new(&default_cover);
+                            if file_path.exists() {
+                                if let Ok(Some(mime)) = infer::get_from_path(file_path) {
+                                    if mime.matcher_type() == infer::MatcherType::IMAGE {
+                                        trace!("Sending default artwork for deck {}", deck_id);
+                                        return Response::from_file(mime.mime_type(), std::fs::File::open(file_path).unwrap()).with_no_cache();
+                                    }
+                                    else {
+                                        error!("File {} is not an image file: {}", file_path.display(), mime);
+                                        return Response::empty_406().with_no_cache();
+                                    }
+                                }
+                                else {
+                                    error!("Could not find mime type of {}", file_path.display());
+                                    return Response::empty_406().with_no_cache();
+                                }
+                            }
+                            else {
+                                error!("Could not find default artwork file: {}", file_path.display());
+                                return Response::empty_404().with_no_cache();
+                            }
+                        },
+                        Some(art) => {
+                            trace!("Sending artwork for deck {}", deck_id);
+                            Response::from_data(art.mime_type, art.data).with_no_cache()
+                        }
                     }
                 },
 

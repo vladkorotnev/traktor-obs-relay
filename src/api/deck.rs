@@ -55,6 +55,7 @@ pub struct DeckStatus {
 impl DeckStatus {
     /// Update the status entry from a delta object, returns whether the change affects the Now Playing status
     pub fn update(&mut self, delta: DeckStatusUpdate) -> bool {
+        trace!("Updating deck {:?} with delta: {:?}", self.deck, delta);
         let mut rslt = false;
         if let Some(time) = delta.elapsed_time {
             self.elapsed_time = time;
