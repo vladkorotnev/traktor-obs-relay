@@ -7,6 +7,15 @@
         <script type="text/javascript" src="api-ws.js"></script>
         <script type="text/javascript" src="api.js"></script>
         <script type="text/javascript">
+            // Remove invisible items
+            function cleanup() {
+                let container = document.getElementById("tracks");
+                var row = container.lastElementChild;
+                while(row && !isInViewport(row)) {
+                    container.removeChild(row);
+                    row = container.lastElementChild;
+                }
+            }
             // Called when track ends playing
             function popTrack(meta) {
                 let container = document.getElementById("tracks");
@@ -34,6 +43,8 @@
 
                 setTimeout(() => {
                     row.classList = "track";
+                    
+                    cleanup();
                 }, 1);
             }
 
@@ -42,6 +53,11 @@
 
             // Called when bpm changes
             function onBpmChanged(bpm) {
+            }
+
+            function isInViewport(el) {
+                const rect = el.getBoundingClientRect();
+                return rect.top >= 0;
             }
         </script>
     </head>
