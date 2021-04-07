@@ -19,7 +19,10 @@
             // Called when track ends playing
             function popTrack(meta) {
                 let container = document.getElementById("tracks");
-
+                
+                if(container.firstElementChild && 
+                    container.firstElementChild.getAttribute("data-filepath") == meta.filePath) return;
+                    
                 let row = document.createElement("div");
                 row.classList = "track adding";
                 row.setAttribute("data-filepath", meta.filePath);
