@@ -1,0 +1,32 @@
+body {
+    font-family: 'RocknRoll One', sans-serif;
+    background: rgba(0,0,0,255);
+    color: white;
+    overflow: hidden;
+}
+
+.header {
+    display: inline-block;
+    font-size: 18px;
+    margin: 10px;
+    margin-left: auto;
+    margin-right: auto;
+    text-align: center;
+    width: 100%;
+    color: #ccc;
+}
+
+.header > span {
+    transform: skewX(10deg);
+}
+
+.bpm {
+    font-size: 32px;
+    font-weight: 500;
+    width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+    text-align: center;
+    font-family: 'DSEG14 Modern';
+    color: #0c0;
+}

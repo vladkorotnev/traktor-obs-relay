@@ -1,0 +1,54 @@
+<html>
+    <head>
+        <title>BPM</title>
+        <link href="bpm.css" rel="stylesheet">
+        <script type="text/javascript" src="api-ws.js"></script> 
+        <script type="text/javascript" src="api.js"></script>
+        <script type="text/javascript">
+            var oldBpm = 0;
+            var oldAnim = 0;
+            // Called when track ends playing
+            function popTrack(meta) {
+            }
+
+            // Called when new track plays
+            function pushTrack(meta) {
+            }
+
+            // Called when bpm changes
+            function onBpmChanged(bpm) {
+                console.log("Change bpm to", bpm);
+                let newBpm =  Math.floor(bpm);
+                animateValue("bpm", oldBpm, newBpm, 500);
+                oldBpm = newBpm;
+            }
+
+            function animateValue(id, start, end, duration) {
+                if (start === end) return;
+                if(oldAnim) clearInterval(oldAnim);
+                var range = end - start;
+                var current = start;
+                var dir = end > start;
+                var increment = dir? 1 : -1;
+                var stepTime = Math.abs(Math.floor(duration / range));
+                var obj = document.getElementById(id);
+                var timer = setInterval(function() {
+                    current += increment;
+                    obj.innerHTML = Math.floor(current);
+                    if ( dir ? (current >= end) : (current <= end) ) {
+                        obj.innerHTML = end;
+                        clearInterval(timer);
+                    }
+                    console.log(current, end);
+                }, stepTime);
+                oldAnim = timer;
+            }
+
+        </script>
+    </head>
+    <body>
+        <div class="header"><span>BPM</span></div>
+        <div class="bpm" id="bpm">???
+        </div>
+    </body>
+</html>
