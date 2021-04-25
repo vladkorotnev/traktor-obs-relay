@@ -1,0 +1,48 @@
+<html>
+    <head>
+        <title>BPM</title>
+        <style type="text/css">
+        #headbanger {
+            background-image: url('headbanger.png');
+            width: 380px;
+            height: 214px;
+          /*  animation: headbang 1.8s steps(36) infinite; */
+        }
+        @keyframes headbang {
+            100% { background-position: -13680px; }
+        }
+        </style>
+        <script type="text/javascript" src="api-ws.js"></script> 
+        <script type="text/javascript" src="api.js"></script>
+        <script type="text/javascript">
+            var frameCount = 36;
+            var headbangsInAllFrames = 4;
+
+            // Called when track ends playing
+            function popTrack(meta) {
+            }
+
+            // Called when new track plays
+            function pushTrack(meta) {
+            }
+
+            // Called when bpm changes
+            function onBpmChanged(bpm) {
+                console.log("Change bpm to", bpm);
+
+                let secondsPerBeat = 60.0/bpm;
+                let secondsPerWholeAnimation = secondsPerBeat * headbangsInAllFrames;
+
+                let css = "headbang "+secondsPerWholeAnimation+"s steps("+frameCount+") infinite";
+                console.log(css);
+                document.getElementById('headbanger').style.animation = css;
+            }
+
+            
+
+        </script>
+    </head>
+    <body>
+        <img id="headbanger" />
+    </body>
+</html>
