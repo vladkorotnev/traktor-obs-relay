@@ -1,0 +1,45 @@
+<html>
+    <head>
+        <title>Video intro</title>
+        <script type="text/javascript" src="api-ws.js"></script> 
+        <script type="text/javascript" src="api.js"></script>
+        <script type="text/javascript">
+            var onceFlag = false;
+
+            // Called when track ends playing
+            function popTrack(meta) {
+            }
+
+            // Called when new track plays
+            function pushTrack(meta) {
+                if(onceFlag) return;
+                onceFlag = true;
+
+                console.log("Play");
+                video.addEventListener('ended',() => {
+                    console.log('end');
+                    video.style.display = "none";
+                },false);
+                video.style.display = "";
+                document.body.style.backgroundColor = "";
+                video.play();
+            }
+
+            // Called when bpm changes
+            function onBpmChanged(bpm) {
+            }
+        </script>
+        <style type="text/css">
+            html, body, * {
+                background-color: transparent;
+            }
+            #video {
+                width: 100%;
+                height: 100%;
+            }
+        </style>
+    </head>
+    <body style="background-color: #000;">
+        <video muted preload="auto" id="video" src="video.mp4" style="display:none"></video>
+    </body>
+</html>
