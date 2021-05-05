@@ -15,19 +15,33 @@
         <script type="text/javascript" src="api-ws.js"></script> 
         <script type="text/javascript" src="api.js"></script>
         <script type="text/javascript">
+            var nowBpm = 0;
             var frameCount = 36;
-            var headbangsInAllFrames = 4;
+            var headbangsInAllFrames = 6;
+            var pushes = 0;
 
             // Called when track ends playing
             function popTrack(meta) {
+                if(pushes > 0) pushes--;
+                console.log(pushes);
             }
 
             // Called when new track plays
             function pushTrack(meta) {
+                if(pushes == 0) {
+                    // reset animation
+                    var elm = document.getElementById('headbanger');
+                    var newone = elm.cloneNode(true);
+                    elm.parentNode.replaceChild(newone, elm);
+                }
+                pushes++;
+                console.log(pushes);
             }
 
             // Called when bpm changes
             function onBpmChanged(bpm) {
+                if(nowBpm == bpm) return;
+
                 console.log("Change bpm to", bpm);
 
                 let secondsPerBeat = 60.0/bpm;
@@ -36,6 +50,7 @@
                 let css = "headbang "+secondsPerWholeAnimation+"s steps("+frameCount+") infinite";
                 console.log(css);
                 document.getElementById('headbanger').style.animation = css;
+                nowBpm = bpm;
             }
 
             
