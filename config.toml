@@ -8,6 +8,9 @@ port = 8080
 ws_port = 9090
 # Place with html files
 webroot = "./assets"
+# Send minor events over websocket too. Disabling on slow machines may improve performance,
+# but will break widgets relying on tick events e.g. subtitles renderer.
+more_events = true
 
 # Traktor setup settings for now playing decision logic
 [mixing]

@@ -55,14 +55,17 @@ pub struct DeckStatus {
 impl DeckStatus {
     /// Update the status entry from a delta object, returns whether the change affects the Now Playing status
     pub fn update(&mut self, delta: DeckStatusUpdate) -> bool {
+        use crate::settings::ServerSettings;
+
         trace!("Updating deck {:?} with delta: {:?}", self.deck, delta);
         let mut rslt = false;
         if let Some(time) = delta.elapsed_time {
             self.elapsed_time = time;
+            rslt |= ServerSettings::shared().http.more_events;
         }
         if let Some(playing) = delta.is_playing {
             self.is_playing = playing;
-            rslt = true;
+            rslt |= true;
         }
         if let Some(sync) = delta.is_synced {
             self.is_synced = sync;
@@ -72,6 +75,7 @@ impl DeckStatus {
         }
         if let Some(tempo) = delta.tempo {
             self.tempo = tempo;
+            rslt |= ServerSettings::shared().http.more_events;
         }
         if let Some(res_key) = delta.resulting_key {
             self.resulting_key = res_key;

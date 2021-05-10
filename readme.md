@@ -6,7 +6,22 @@ P.S. Features like artwork or subtitle retrieval assume the server is running on
 
 ## Demo video
 
-[Link on YouTube](https://www.youtube.com/watch?v=KKy2x2GCP5A)
+Check this small [video on YouTube](https://www.youtube.com/watch?v=KKy2x2GCP5A), or have a look at my debut set for Anison Hijack [also on YouTube](https://youtu.be/hcdWe641rPE) which makes use of all available widgets at the time.
+
+## Core architecture
+
+The executable itself only acts as a state store, tiny web server and an event bus in one thing.
+
+It also "demuxes" track and deck events, combining them together to effectively figure out what tracks are hearable to the listeners. Thus, a playing deck won't affect the widgets if it's closed behind the Xfader or the channel fader. 
+
+Clients can then poll the host executable on `/nowPlaying` or get the same update data on most major events via websocket. 
+
+There is a simple JavaScript client layer implemented under `assets/api` which will, when loaded into a page, execute the following functions in the page context:
+
+* `pushTrack(meta)`: when a new track is introduced into the mix
+* `popTrack(meta)`: when a track is removed from the mix
+* `onBpmChanged(bpm)`: when the master clock BPM is changed
+* `trackTick(meta)`: when a track receives a minor update (elapsed time or BPM change)
 
 ## How to build
 
@@ -27,6 +42,7 @@ Just use the usual Rust workflow (`cargo build` or `cargo run`).
 * `port`: the port for HTTP server, both Traktor API and our API and widgets folder. Because Traktor-API-Client uses 8080, it's recommended to leave it as is. However if you changed the port in Traktor-API-Client, change it here as well as in the OBS browser URLs and in `assets/api.js` if using the default templates.
 * `ws_port`: the port for the websocket that pushes track events to the widgets. If changing it here, change it in your widget code as well (or `assets/api-ws.js` if using the default templates).
 * `webroot`: the folder with your widget content. This is what you can access by adding filenames to `http://<your bound IP>:<your port>/` such as in the example setup above.
+* `more_events`: enables sending of minor events, such as elapsed time ticks, to the websocket.
 
 ### Mixing section
 

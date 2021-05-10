@@ -14,6 +14,8 @@ pub struct HttpSettings {
     pub ws_port: u16,
     /// Webroot to throw unmatched requests at
     pub webroot: String,
+    /// Send verbose events to websocket or not
+    pub more_events: bool
 }
 
 /// Logic part settings
