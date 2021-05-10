@@ -3,7 +3,7 @@
         <title>BPM</title>
         <style type="text/css">
         #headbanger {
-            background-image: url('headbanger.png');
+            background-image: url('data/headbanger.png');
             width: 380px;
             height: 214px;
           /*  animation: headbang 1.8s steps(36) infinite; */
@@ -12,8 +12,8 @@
             100% { background-position: -13680px; }
         }
         </style>
-        <script type="text/javascript" src="api-ws.js"></script> 
-        <script type="text/javascript" src="api.js"></script>
+        <script type="text/javascript" src="api/api-ws.js"></script> 
+        <script type="text/javascript" src="api/api.js"></script>
         <script type="text/javascript">
             var nowBpm = 0;
             var frameCount = 36;
@@ -52,9 +52,6 @@
                 document.getElementById('headbanger').style.animation = css;
                 nowBpm = bpm;
             }
-
-            
-
         </script>
     </head>
     <body>
