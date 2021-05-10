@@ -24,44 +24,102 @@
             // Initialize the subtitle renderer
             var renderOpts = {
                 canvas: document.getElementById('screen'),
-                //subUrl: '',
+                subUrl: '/data/dummy.ass', // octopus doesn't like null urls on init
                 // fonts: [],
                 workerUrl: '/3rdparty/octopus/subtitles-octopus-worker.js',
                 legacyWorkerUrl: '/3rdparty/octopus/subtitles-octopus-worker-legacy.js',
             };
             var renderer = new SubtitlesOctopus(renderOpts);
+            renderer.setIsPaused(true, 0);
+            window.addEventListener("resize", (ev) => {
+                updateResolution();
+            }, false);
+            window.addEventListener("load", (ev) => {
+                updateResolution();
+            }, false);
+
+            // Queue of meta objects for decks that are playing and have subtitles
+            var queue = [];
+            var current = undefined;
+            var playingSubtitles = false;
+
+            function updateResolution() {
+                let el = document.getElementById('screen');
+                renderer.resize(el.clientWidth, el.clientHeight);
+            }
 
             function runSubtitles() {
                 // If already running, return
+                if(playingSubtitles) return;
+
+                // If nothing to play, return
+                if(queue.length == 0) return;
+
                 // If not playing any subtitles, play the first queued subtitles
-                // Call setRate to set the speed to meta.tempo/meta.bpm (adjust to actual play speed)
+                let current = queue.unshift();
+
+                renderer.setTrackByUrl( current.subtitleData );
+                renderer.setCurrentTime(current.elapsedTime);
+                renderer.setRate(current.tempo / current.bpm);
+                renderer.setIsPaused(false);
+
+                playingSubtitles = true;
+            }
+
+            function stopSubtitles() {
+                if(!playingSubtitles) return;
+                renderer.freeTrack();
+                current = undefined;
+                playingSubtitles = false;
             }
 
             // Called when track ends playing
             function popTrack(meta) {
                 console.log("Pop track:", meta);
 
-                // Dequeue the deck's subtitles
-                // If any other are in the queue, start playing
-                runSubtitles();
+                if(current.filePath == meta.filePath) {
+                    // Stop current subtitles
+                    stopSubtitles();
+                    // If any other are in the queue, start playing them
+                    runSubtitles();
+                } else {
+                    // Dequeue the deck's subtitles
+                    queue = queue.filter(item => item.filePath != meta.filePath);
+                }
             }
 
             // Called when new track plays
             function pushTrack(meta) {
-                console.log("Push track:", meta);
-
-                // Enqueue deck's subtitles to avoid overlap when both decks have subtitles
-
-                // Start playing if not yet
-                runSubtitles();
+                // Enqueue deck's subtitles if any
+                let xhr = new XMLHttpRequest();
+                xhr.open("GET", getSubtitleUrl(meta));
+                xhr.onload = () => {
+                    if (xhr.status == 200) {
+                        meta.subtitleData = xhr.response;
+                        queue.push(meta);
+                        console.log("Push track into subtitle queue", meta);
+                        // Start playing if not yet
+                        runSubtitles();
+                    } else {
+                        console.error("Subtitles error", xhr.status);
+                    }
+                };
+                xhr.onerror = console.error;
+                xhr.send();
             }
 
             // Called periodically when a track is progressing
             function trackTick(meta) {
-                console.log("Tick:", meta);
-
-                // Check if ticked deck == subtitle deck
-                // Call setCurrentTime to meta.elapsedTime
+                if(current && current.filePath == meta.filePath) {
+                    renderer.setIsPaused(false, meta.elapsedTime);
+                    renderer.setRate(meta.tempo / meta.bpm);
+                } else {
+                    let idx = queue.findIndex(x => x.filePath == meta.filePath);
+                    if(idx > -1) {
+                        meta.subtitleData = queue[idx].subtitleData;
+                        queue[idx] = meta;
+                    }
+                }
             }
         </script>
     </body>

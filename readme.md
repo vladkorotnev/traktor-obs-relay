@@ -2,7 +2,7 @@
 
 A tiny [Traktor-API-Client](https://github.com/ErikMinekus/traktor-api-client) server for use on live streams.
 
-P.S. Features like artwork retrieval assume the server is running on the same host as Traktor for now.
+P.S. Features like artwork or subtitle retrieval assume the server is running on the same host as Traktor for now.
 
 ## Demo video
 
@@ -32,6 +32,15 @@ Just use the usual Rust workflow (`cargo build` or `cargo run`).
 
 * `deck_list`: list of deck letters to acknowledge track names from, the rest will be ignored. Case-sensitive ('A' and 'a' are different).
 * `deck_channel_map`: list of which deck goes to which channel. Usually in Traktor's crossfader grid it's `A=1, B=2, C=3, D=4`.
+* `default_cover`: path to the default cover art when reading one from the deck info is not possible.
+
+## Exposed endpoints
+
+Aside from the usual endpoints from Traktor-API-Client, the HTTP host also provides the following URLs:
+
+* `/nowPlaying`: get the current on-air state of everything that can be heard by the listeners (on-air tracks, master clock BPM and etc.)
+* `/artwork/<deck letter>`: get the artwork for the track playing in the specified deck. Currently only reading artwork from FLAC and MP3 files is supported.
+* `/subtitles/<deck letter>`: get the subtitle file for the track playing in the specified deck. It should reside in the same folder as the track, with the same name and the extension `ass` for Advanced Substation format. E.g. if you are playing a track from `D:\Music\The Beatles\Help.mp3`, the subtitles should be located in `D:\Music\The Beatles\Help.ass`.
 
 ## About the bundled widgets
 
@@ -62,3 +71,9 @@ Same, but displays album art next to the track names  (see [demo](https://www.yo
 Place this as a fullscreen overlay over your stream. Place `video.mp4` into the assets folder (**NB:** Unlike all other resources, it's not included, so won't work right away!).
 
 The stream video will become dark. When you start your first song in Traktor, `video.mp4` will play. Once `video.mp4` ends playing, your stream layout is visible. It's recommended to use a video with transparency to create a less abrupt transition into the set.
+
+### `subtitle.html`
+
+Based upon the [JavascriptSubtitlesOctopus](https://github.com/libass/JavascriptSubtitlesOctopus) library.
+
+Place this as a fullscreen overlay over your stream. It will play subtitle files to your songs (Advanced Substation Alpha, a.k.a. ASS format) on the first played, first shown basis. This is probably resource-heavy so don't go too hard on adding that vintage fansub karaoke flair with half a dozen animations per symbol!
