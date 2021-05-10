@@ -185,8 +185,21 @@ fn start_http() {
                     }
                 },
 
+                (GET) (/subtitles/{deck_id: Deck}) => {
+                    trace!("Subtitles get over HTTP");
+                    let decks = DECK_STATUS.read().expect("RwLock failed");
+                    match super::logic::get_deck_subtitles(&deck_id, &decks) {
+                        None => {
+                            Response::empty_404().with_no_cache()
+                        },
+                        Some(text) => {
+                            Response::from_data("text/plain", text).with_no_cache()
+                        }
+                    }
+                },
+
                 _ => {
-                    rouille::match_assets(&request, &root)
+                    rouille::match_assets(&request, &root).with_no_cache()
                 }
             )
         })

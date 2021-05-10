@@ -4,6 +4,7 @@ use super::{
 };
 use std::collections::HashMap;
 use std::path::Path;
+use std::fs::read_to_string;
 
 pub fn get_songs_on_air(
     cur_decks: &HashMap<Deck, DeckStatus>,
@@ -91,6 +92,34 @@ pub fn get_deck_artwork(deck_id: &Deck, decks: &HashMap<Deck, DeckStatus>) -> Op
                 }
             } else {
                 error!("Could not determine extension of file {}", file_path.display());
+                None
+            }
+        }
+    } else {
+        error!("Could not get deck {}", deck_id);
+        None
+    }
+}
+
+pub fn get_deck_subtitles(deck_id: &Deck, decks: &HashMap<Deck, DeckStatus>) -> Option<String> {
+    if let Some(deck) = decks.get(deck_id) {
+        let fpath = &deck.file_path;
+        trace!("Get artwork of deck {}: {}", deck_id, fpath);
+        let file_path = Path::new(&fpath);
+        if !file_path.exists() {
+            error!("Deck {} is playing a nonexistent file {}", deck_id, file_path.display());
+            None
+        } else {
+            let subtitle_path = file_path.with_extension("ass");
+            if subtitle_path.exists() {
+                if let Ok(content) = read_to_string(&subtitle_path) {
+                    Some(content)
+                } else {
+                    error!("Could not read subtitles from {:?}", subtitle_path);
+                    None
+                }
+            } else {
+                trace!("Not found subtitles at path {:?}", subtitle_path);
                 None
             }
         }
