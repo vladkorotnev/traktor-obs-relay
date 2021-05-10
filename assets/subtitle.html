@@ -44,7 +44,7 @@
             var current = undefined;
             var playingSubtitles = false;
             
-            var fps = 60;//<-- MUST BE SAME AS IN OBS!!!
+            var fps = 30;//<-- MUST BE SAME AS IN OBS!!!
             var fpsRecip = 1/fps; 
             
             var animatorHandle = undefined;
@@ -132,8 +132,6 @@
                 if(current && current.filePath == meta.filePath) {
                     current.elapsedTime = meta.elapsedTime;
                     renderer.setIsPaused(false);
-                    renderer.setCurrentTime(meta.elapsedTime);
-                    nextUpdateExpectation = meta.elapsedTime + 1;
                     renderer.setRate(meta.tempo / meta.bpm);
                 } else {
                     let idx = queue.findIndex(x => x.filePath == meta.filePath);
@@ -149,8 +147,6 @@
 
                 // jitter reduction:
                 animatorHandle = requestAnimationFrame(animator);
-                if(nextUpdateExpectation - current.elapsedTime < fpsRecip) return;
-
                 current.elapsedTime += fpsRecip;
                 renderer.setIsPaused(false);
                 renderer.setCurrentTime(current.elapsedTime);
