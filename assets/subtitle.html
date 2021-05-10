@@ -25,9 +25,10 @@
             var renderOpts = {
                 canvas: document.getElementById('screen'),
                 subUrl: '/data/dummy.ass', // octopus doesn't like null urls on init
-                // fonts: [],
+                fonts: ['/3rdparty/fonts/RocknRollOne-Regular.ttf'],
                 workerUrl: '/3rdparty/octopus/subtitles-octopus-worker.js',
                 legacyWorkerUrl: '/3rdparty/octopus/subtitles-octopus-worker-legacy.js',
+                lossyRender: true,
             };
             var renderer = new SubtitlesOctopus(renderOpts);
             renderer.setIsPaused(true, 0);
@@ -42,6 +43,7 @@
             var queue = [];
             var current = undefined;
             var playingSubtitles = false;
+            var fpsRecip = 1/30; //<-- MUST BE SAME AS IN OBS!!!
 
             function updateResolution() {
                 let el = document.getElementById('screen');
@@ -56,7 +58,7 @@
                 if(queue.length == 0) return;
 
                 // If not playing any subtitles, play the first queued subtitles
-                let current = queue.unshift();
+                current = queue.shift();
 
                 renderer.setTrack( current.subtitleData );
                 renderer.setCurrentTime(current.elapsedTime);
@@ -64,6 +66,7 @@
                 renderer.setIsPaused(false);
 
                 playingSubtitles = true;
+                requestAnimationFrame(animator);
             }
 
             function stopSubtitles() {
@@ -111,7 +114,9 @@
             // Called periodically when a track is progressing
             function trackTick(meta) {
                 if(current && current.filePath == meta.filePath) {
-                    renderer.setIsPaused(false, meta.elapsedTime);
+                    current.elapsedTime = meta.elapsedTime;
+                    renderer.setIsPaused(false);
+                    renderer.setCurrentTime(meta.elapsedTime);
                     renderer.setRate(meta.tempo / meta.bpm);
                 } else {
                     let idx = queue.findIndex(x => x.filePath == meta.filePath);
@@ -120,6 +125,15 @@
                         queue[idx] = meta;
                     }
                 }
+            }
+
+            function animator() {
+                if(!playingSubtitles || !current) return;
+
+                current.elapsedTime += fpsRecip;
+                renderer.setIsPaused(false);
+                renderer.setCurrentTime(current.elapsedTime);
+                requestAnimationFrame(animator);
             }
         </script>
     </body>
