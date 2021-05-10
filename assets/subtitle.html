@@ -44,7 +44,7 @@
             var current = undefined;
             var playingSubtitles = false;
             
-            var fps = 30;//<-- MUST BE SAME AS IN OBS!!!
+            var fps = 60;//<-- MUST BE SAME AS IN OBS!!!
             var fpsRecip = 1/fps; 
             
             var animatorHandle = undefined;
@@ -119,10 +119,13 @@
             // Called periodically when a track is progressing
             function trackTick(meta) {
                 if(current && current.filePath == meta.filePath) {
-                    if(Math.abs(meta.elapsedTime - current.elapsedTime) > fps*fpsRecip) {
-                        // if astray for more than 10 frames, force set time
+                    if( (Math.abs(meta.elapsedTime - current.elapsedTime) > (fps/2)*fpsRecip) || current.tempo != meta.tempo) {
+                        // if astray for more than 0.5s of frames, force set time
+                        cancelAnimationFrame(animatorHandle);
                         current.elapsedTime = meta.elapsedTime;
                         renderer.setCurrentTime(current.elapsedTime);
+                        lastAnim = Date.now();
+                        animatorHandle = requestAnimationFrame(animator);
                     }
                     renderer.setIsPaused(false);
                     current.tempo = meta.tempo;
@@ -136,14 +139,21 @@
                 }
             }
 
+            var lastAnim = Date.now();
             function animator() {
-                if(playingSubtitles || current) {
-                    current.elapsedTime += fpsRecip;
-                    renderer.setIsPaused(false);
-                    renderer.setCurrentTime(current.elapsedTime);
-                }
-
                 animatorHandle = requestAnimationFrame(animator);
+
+                var now = Date.now();
+                var elapsed = now - lastAnim;
+
+                if(elapsed >= fpsRecip*1000) {
+                    if(playingSubtitles || current) {
+                        current.elapsedTime += elapsed/1000;
+                        renderer.setIsPaused(false);
+                        renderer.setCurrentTime(current.elapsedTime);
+                    }
+                    lastAnim = now - (elapsed % fpsRecip);
+                }
             }
 
             animatorHandle = requestAnimationFrame(animator);
