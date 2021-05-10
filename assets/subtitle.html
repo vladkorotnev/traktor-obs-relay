@@ -44,7 +44,7 @@
             var current = undefined;
             var playingSubtitles = false;
             
-            var fps = 30;//<-- MUST BE SAME AS IN OBS!!!
+            var fps = 60;//<-- MUST BE SAME AS IN OBS!!!
             var fpsRecip = 1/fps; 
             
             var animatorHandle = undefined;
@@ -130,7 +130,11 @@
             // Called periodically when a track is progressing
             function trackTick(meta) {
                 if(current && current.filePath == meta.filePath) {
-                    current.elapsedTime = meta.elapsedTime;
+                    if(Math.abs(meta.elapsedTime - current.elapsedTime) > 10*fpsRecip) {
+                        // if astray for more than 10 frames, force set time
+                        current.elapsedTime = meta.elapsedTime;
+                        renderer.setCurrentTime(current.elapsedTime);
+                    }
                     renderer.setIsPaused(false);
                     renderer.setRate(meta.tempo / meta.bpm);
                 } else {
