@@ -43,7 +43,21 @@
             var queue = [];
             var current = undefined;
             var playingSubtitles = false;
-            var fpsRecip = 1/30; //<-- MUST BE SAME AS IN OBS!!!
+            
+            var fps = 60;//<-- MUST BE SAME AS IN OBS!!!
+            var fpsRecip = 1/fps; 
+            
+            var animatorHandle = undefined;
+            var nextUpdateExpectation = 0;
+
+            function startAnimator() {
+                if(animatorHandle) return;
+                animatorHandle = requestAnimationFrame(animator);
+            }
+
+            function stopAnimator() {
+                cancelAnimationFrame(animatorHandle);
+            }
 
             function updateResolution() {
                 let el = document.getElementById('screen');
@@ -62,11 +76,12 @@
 
                 renderer.setTrack( current.subtitleData );
                 renderer.setCurrentTime(current.elapsedTime);
+                nextUpdateExpectation = current.elapsedTime + 1;
                 renderer.setRate(current.tempo / current.bpm);
                 renderer.setIsPaused(false);
 
                 playingSubtitles = true;
-                requestAnimationFrame(animator);
+                startAnimator();
             }
 
             function stopSubtitles() {
@@ -74,6 +89,7 @@
                 renderer.freeTrack();
                 current = undefined;
                 playingSubtitles = false;
+                stopAnimator();
             }
 
             // Called when track ends playing
@@ -117,6 +133,7 @@
                     current.elapsedTime = meta.elapsedTime;
                     renderer.setIsPaused(false);
                     renderer.setCurrentTime(meta.elapsedTime);
+                    nextUpdateExpectation = meta.elapsedTime + 1;
                     renderer.setRate(meta.tempo / meta.bpm);
                 } else {
                     let idx = queue.findIndex(x => x.filePath == meta.filePath);
@@ -130,10 +147,13 @@
             function animator() {
                 if(!playingSubtitles || !current) return;
 
+                // jitter reduction:
+                animatorHandle = requestAnimationFrame(animator);
+                if(nextUpdateExpectation - current.elapsedTime < fpsRecip) return;
+
                 current.elapsedTime += fpsRecip;
                 renderer.setIsPaused(false);
                 renderer.setCurrentTime(current.elapsedTime);
-                requestAnimationFrame(animator);
             }
         </script>
     </body>
