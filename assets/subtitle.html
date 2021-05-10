@@ -58,7 +58,7 @@
                 // If not playing any subtitles, play the first queued subtitles
                 let current = queue.unshift();
 
-                renderer.setTrackByUrl( current.subtitleData );
+                renderer.setTrack( current.subtitleData );
                 renderer.setCurrentTime(current.elapsedTime);
                 renderer.setRate(current.tempo / current.bpm);
                 renderer.setIsPaused(false);
