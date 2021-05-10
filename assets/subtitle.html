@@ -1,0 +1,68 @@
+<html>
+    <head>
+        <title>Subtitle Render</title>
+        <script type="text/javascript" src="./3rdparty/octopus/subtitles-octopus.js"></script> 
+        <style type="text/css">
+            html, body {
+                margin: 0;
+            }
+
+            #screen {
+                position:absolute;
+                left: 0; 
+                top: 0;
+                width: 100%;
+                height: 100%;
+            }
+        </style>
+    </head>
+    <body>
+        <canvas id="screen"></canvas>
+        <script type="text/javascript" src="api/api-ws.js"></script> 
+        <script type="text/javascript" src="api/api.js"></script>
+        <script type="text/javascript">
+            // Initialize the subtitle renderer
+            var renderOpts = {
+                canvas: document.getElementById('screen'),
+                //subUrl: '',
+                // fonts: [],
+                workerUrl: '/3rdparty/octopus/subtitles-octopus-worker.js',
+                legacyWorkerUrl: '/3rdparty/octopus/subtitles-octopus-worker-legacy.js',
+            };
+            var renderer = new SubtitlesOctopus(renderOpts);
+
+            function runSubtitles() {
+                // If already running, return
+                // If not playing any subtitles, play the first queued subtitles
+                // Call setRate to set the speed to meta.tempo/meta.bpm (adjust to actual play speed)
+            }
+
+            // Called when track ends playing
+            function popTrack(meta) {
+                console.log("Pop track:", meta);
+
+                // Dequeue the deck's subtitles
+                // If any other are in the queue, start playing
+                runSubtitles();
+            }
+
+            // Called when new track plays
+            function pushTrack(meta) {
+                console.log("Push track:", meta);
+
+                // Enqueue deck's subtitles to avoid overlap when both decks have subtitles
+
+                // Start playing if not yet
+                runSubtitles();
+            }
+
+            // Called periodically when a track is progressing
+            function trackTick(meta) {
+                console.log("Tick:", meta);
+
+                // Check if ticked deck == subtitle deck
+                // Call setCurrentTime to meta.elapsedTime
+            }
+        </script>
+    </body>
+</html>

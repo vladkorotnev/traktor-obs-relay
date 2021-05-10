@@ -18,6 +18,11 @@
             function onBpmChanged(bpm) {
                 console.log("Change bpm to", bpm);
             }
+
+            // Called periodically when a track is progressing
+            function trackTick(meta) {
+                console.log("Tick:", meta);
+            }
         </script>
     </head>
     <body>

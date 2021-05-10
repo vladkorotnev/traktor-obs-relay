@@ -1,6 +1,7 @@
 const API_ROOT = "http://127.0.0.1:8080/";
 const NOW_PLAYING_API = "nowPlaying";
 const ART_API = "artwork/";
+const SUB_API = "subtitles/";
 const CHECK_INTERVAL = 2000;
 
 function query() {
@@ -26,6 +27,13 @@ function getArtUrl(meta) {
     return "";
 }
 
+function getSubtitleUrl(meta) {
+    if(meta.deck) {
+        return API_ROOT+SUB_API+meta.deck+"?nocache="+Date.now();
+    }
+    return "";
+}
+
 var tracks = {};
 var oldBpm = 0;
 function processUpdates(info) {
@@ -36,16 +44,28 @@ function processUpdates(info) {
         let newPaths = Object.keys(newTracks);
         let oldPaths = Object.keys(tracks);
 
-        let goneTracks = oldPaths.filter(path => newPaths.indexOf(path) == -1).map(x => tracks[x]);
-        let addedTracks = newPaths.filter(path => oldPaths.indexOf(path) == -1).map(x => newTracks[x]);
+        if(typeof popTrack == "function") {
+            let goneTracks = oldPaths.filter(path => newPaths.indexOf(path) == -1).map(x => tracks[x]);
+            goneTracks.forEach(element => popTrack(element));
+        }
 
-        goneTracks.forEach(element => popTrack(element));
-        addedTracks.forEach(element => pushTrack(element));
+        if(typeof pushTrack == "function") {
+            let addedTracks = newPaths.filter(path => oldPaths.indexOf(path) == -1).map(x => newTracks[x]);
+            addedTracks.forEach(element => pushTrack(element));
+        }
+
+        if(typeof trackTick == "function") {
+            let progressedTracks = newPaths.filter(path => oldPaths.indexOf(path) > -1).map(x => newTracks[x]);
+            progressedTracks.forEach(element => trackTick(element));
+        }
 
         tracks = newTracks;
     }
+
     if(info.bpm && info.bpm != oldBpm) {
-        onBpmChanged(info.bpm);
+        if(typeof onBpmChanged == "function") {
+            onBpmChanged(info.bpm);
+        }
         oldBpm = info.bpm;
     }
 }

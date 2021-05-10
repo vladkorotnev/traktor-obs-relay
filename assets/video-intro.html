@@ -6,10 +6,6 @@
         <script type="text/javascript">
             var onceFlag = false;
 
-            // Called when track ends playing
-            function popTrack(meta) {
-            }
-
             // Called when new track plays
             function pushTrack(meta) {
                 if(onceFlag) return;
@@ -23,10 +19,6 @@
                 video.style.display = "";
                 document.body.style.backgroundColor = "";
                 video.play();
-            }
-
-            // Called when bpm changes
-            function onBpmChanged(bpm) {
             }
         </script>
         <style type="text/css">
