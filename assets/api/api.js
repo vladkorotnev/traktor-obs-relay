@@ -54,9 +54,11 @@ function processUpdates(info) {
             addedTracks.forEach(element => pushTrack(element));
         }
 
-        if(typeof trackTick == "function") {
-            let progressedTracks = newPaths.filter(path => oldPaths.indexOf(path) > -1).map(x => newTracks[x]);
-            progressedTracks.forEach(element => trackTick(element));
+        if(typeof trackTick == "function" && info.tickedDeck) {
+            let progressedTrack = info.songsOnAir.find(x => x.deck == info.tickedDeck);
+            if(progressedTrack) {
+                trackTick(progressedTrack);
+            }
         }
 
         tracks = newTracks;

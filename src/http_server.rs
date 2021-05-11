@@ -17,6 +17,7 @@ pub fn spawn_http() {
 struct NowPlayingResponse {
     pub bpm: f32,
     pub songs_on_air: Vec<DeckStatus>,
+    pub ticked_deck: Option<Deck>
 }
 
 impl NowPlayingResponse {
@@ -27,7 +28,18 @@ impl NowPlayingResponse {
     ) -> Self {
         let bpm = clock.bpm;
         let songs_on_air = super::logic::get_songs_on_air(cur_decks, cur_chans);
-        Self { songs_on_air, bpm }
+        Self { songs_on_air, bpm, ticked_deck: None }
+    }
+
+    pub fn tick(
+        clock: &MasterClock,
+        cur_decks: &HashMap<Deck, DeckStatus>,
+        cur_chans: &HashMap<Channel, ChannelStatus>,
+        tick_reason: Deck
+    ) -> Self {
+        let bpm = clock.bpm;
+        let songs_on_air = super::logic::get_songs_on_air(cur_decks, cur_chans);
+        Self { songs_on_air, bpm, ticked_deck: Some(tick_reason) }
     }
 }
 
@@ -111,7 +123,7 @@ fn start_http() {
                         if deck.update(new_status) {
                             let chans = CHANNEL_STATUS.read().expect("RwLock failed");
                             let clock = MASTER_CLOCK.read().expect("RwLock failed");
-                            super::ws_server::ws_push(&NowPlayingResponse::create(&clock, &decks, &chans));
+                            super::ws_server::ws_push(&NowPlayingResponse::tick(&clock, &decks, &chans, id));
                         }
                     }
                     else {
