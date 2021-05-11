@@ -21,6 +21,10 @@
         <script type="text/javascript" src="api/api-ws.js"></script> 
         <script type="text/javascript" src="api/api.js"></script>
         <script type="text/javascript">
+            var fps = 60;//<-- MUST BE SAME AS IN OBS!!!
+
+            // ------------------------------------------------------------------------------
+
             // Initialize the subtitle renderer
             var renderOpts = {
                 canvas: document.getElementById('screen'),
@@ -44,8 +48,8 @@
             var current = undefined;
             var playingSubtitles = false;
             
-            var fps = 60;//<-- MUST BE SAME AS IN OBS!!!
-            var fpsRecip = 1/fps; 
+            var fpsRecip = 1/fps; // frame time in seconds
+            var frameTime = fpsRecip*1000; // frame time in ms
             
             var animatorHandle = undefined;
 
@@ -146,13 +150,13 @@
                 var now = Date.now();
                 var elapsed = now - lastAnim;
 
-                if(elapsed >= fpsRecip*1000) {
+                if(elapsed >= frameTime) {
                     if(playingSubtitles || current) {
                         current.elapsedTime += elapsed/1000;
                         renderer.setIsPaused(false);
                         renderer.setCurrentTime(current.elapsedTime);
                     }
-                    lastAnim = now - (elapsed % fpsRecip);
+                    lastAnim = now - (elapsed % frameTime);
                 }
             }
 
