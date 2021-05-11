@@ -70,8 +70,6 @@
 
                 renderer.setTrack( current.subtitleData );
                 renderer.setCurrentTime(current.elapsedTime);
-                nextUpdateExpectation = current.elapsedTime + 1;
-                renderer.setRate(current.tempo / current.bpm);
                 renderer.setIsPaused(false);
 
                 playingSubtitles = true;
@@ -133,7 +131,6 @@
                     }
                     renderer.setIsPaused(false);
                     current.tempo = meta.tempo;
-                    renderer.setRate(meta.tempo / meta.bpm);
                 } else {
                     let idx = queue.findIndex(x => x.filePath == meta.filePath);
                     if(idx > -1) {
@@ -151,8 +148,8 @@
                 var elapsed = now - lastAnim;
 
                 if(elapsed >= frameTime) {
-                    if(playingSubtitles || current) {
-                        current.elapsedTime += elapsed/1000;
+                    if(playingSubtitles && current) {
+                        current.elapsedTime += (elapsed/1000) * (current.tempo/current.bpm);
                         renderer.setIsPaused(false);
                         renderer.setCurrentTime(current.elapsedTime);
                     }
