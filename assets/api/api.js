@@ -2,6 +2,7 @@ const API_ROOT = "http://127.0.0.1:8080/";
 const NOW_PLAYING_API = "nowPlaying";
 const ART_API = "artwork/";
 const SUB_API = "subtitles/";
+const VID_API = "video/";
 const CHECK_INTERVAL = 2000;
 
 function query() {
@@ -30,6 +31,13 @@ function getArtUrl(meta) {
 function getSubtitleUrl(meta) {
     if(meta.deck) {
         return API_ROOT+SUB_API+meta.deck+"?nocache="+Date.now();
+    }
+    return "";
+}
+
+function getVideoUrl(meta) {
+    if(meta.deck) {
+        return API_ROOT+VID_API+meta.deck+"?nocache="+Date.now();
     }
     return "";
 }

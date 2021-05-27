@@ -29,7 +29,7 @@ body {
             rgba( 0, 0, 0, 0 ) 100% );
     background-image: -webkit-linear-gradient( top, 
             rgba( 0, 0, 0, 1 ) 0%, 
-            rgba( 0, 0, 0, 0 ) 25% );
+            rgba( 0, 0, 0, 0 ) 100% );
     content: "\00a0";
     height: 100%;
     position: absolute;

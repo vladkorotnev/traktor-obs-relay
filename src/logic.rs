@@ -101,16 +101,16 @@ pub fn get_deck_artwork(deck_id: &Deck, decks: &HashMap<Deck, DeckStatus>) -> Op
     }
 }
 
-pub fn get_deck_subtitles(deck_id: &Deck, decks: &HashMap<Deck, DeckStatus>) -> Option<String> {
+pub fn get_deck_assoc_file(deck_id: &Deck, decks: &HashMap<Deck, DeckStatus>, extension: &str) -> Option<String> {
     if let Some(deck) = decks.get(deck_id) {
         let fpath = &deck.file_path;
-        trace!("Get artwork of deck {}: {}", deck_id, fpath);
+        trace!("Get associated file of deck {}: {} -> {}", deck_id, fpath, extension);
         let file_path = Path::new(&fpath);
         if !file_path.exists() {
             error!("Deck {} is playing a nonexistent file {}", deck_id, file_path.display());
             None
         } else {
-            let subtitle_path = file_path.with_extension("ass");
+            let subtitle_path = file_path.with_extension(extension);
             if subtitle_path.exists() {
                 if let Ok(content) = read_to_string(&subtitle_path) {
                     Some(content)

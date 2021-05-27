@@ -57,6 +57,7 @@ Aside from the usual endpoints from Traktor-API-Client, the HTTP host also provi
 * `/nowPlaying`: get the current on-air state of everything that can be heard by the listeners (on-air tracks, master clock BPM and etc.)
 * `/artwork/<deck letter>`: get the artwork for the track playing in the specified deck. Currently only reading artwork from FLAC and MP3 files is supported.
 * `/subtitles/<deck letter>`: get the subtitle file for the track playing in the specified deck. It should reside in the same folder as the track, with the same name and the extension `ass` for Advanced Substation format. E.g. if you are playing a track from `D:\Music\The Beatles\Help.mp3`, the subtitles should be located in `D:\Music\The Beatles\Help.ass`.
+* `/video/<deck letter>`: get the video file for the track playing in the specified deck. It should reside in the same folder as the track, with the same name and the extension `mp4` or `webm`. E.g. if you are playing a track from `D:\Music\The Beatles\Help.mp3`, the video should be located in `D:\Music\The Beatles\Help.webm`.
 
 ## About the bundled widgets
 
@@ -93,3 +94,7 @@ The stream video will become dark. When you start your first song in Traktor, `v
 Based upon the [JavascriptSubtitlesOctopus](https://github.com/libass/JavascriptSubtitlesOctopus) library.
 
 Place this as a fullscreen overlay over your stream. It will play subtitle files to your songs (Advanced Substation Alpha, a.k.a. ASS format) on the first played, first shown basis. This is probably resource-heavy so don't go too hard on adding that vintage fansub karaoke flair with half a dozen animations per symbol!
+
+### `auto-vj.html`
+
+Plays video files stored by the same name as the played audio files automatically. Not guaranteed to be 100% in sync for obvious reasons. Supports `webm` and `mp4` with opacity.

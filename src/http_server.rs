@@ -168,6 +168,15 @@ fn start_http() {
 
                     match super::logic::get_deck_artwork(&deck_id, &decks) {
                         None => {
+                            for ftype in [ ("jpg", "image/jpeg"), ("jpeg", "image/jpeg"), ("png", "image/png") ].iter() {
+                                match super::logic::get_deck_assoc_file(&deck_id, &decks, ftype.0) {
+                                    None => continue,
+                                    Some(data) => {
+                                        return Response::from_data(ftype.1, data).with_no_cache()
+                                    }
+                                }
+                            }
+
                             let file_path = std::path::Path::new(&default_cover);
                             if file_path.exists() {
                                 if let Ok(Some(mime)) = infer::get_from_path(file_path) {
@@ -200,7 +209,7 @@ fn start_http() {
                 (GET) (/subtitles/{deck_id: Deck}) => {
                     trace!("Subtitles get over HTTP");
                     let decks = DECK_STATUS.read().expect("RwLock failed");
-                    match super::logic::get_deck_subtitles(&deck_id, &decks) {
+                    match super::logic::get_deck_assoc_file(&deck_id, &decks, "ass") {
                         None => {
                             Response::empty_404().with_no_cache()
                         },
@@ -208,6 +217,20 @@ fn start_http() {
                             Response::from_data("text/plain", text).with_no_cache()
                         }
                     }
+                },
+
+                (GET) (/video/{deck_id: Deck}) => {
+                    trace!("Video get over HTTP");
+                    let decks = DECK_STATUS.read().expect("RwLock failed");
+                    for ftype in [ ("mp4", "video/mp4"), ("webm", "video/webm") ].iter() {
+                        match super::logic::get_deck_assoc_file(&deck_id, &decks, ftype.0) {
+                            None => continue,
+                            Some(data) => {
+                                return Response::from_data(ftype.1, data).with_no_cache()
+                            }
+                        }
+                    }
+                    Response::empty_404().with_no_cache()
                 },
 
                 _ => {
