@@ -26,14 +26,15 @@ body {
 #overlay::before {
     background-image: linear-gradient( top, 
             rgba( 0, 0, 0, 1 ) 0%, 
-            rgba( 0, 0, 0, 0 ) 100% );
+            rgba( 0, 0, 0, 0 ) 10% );
     background-image: -webkit-linear-gradient( top, 
             rgba( 0, 0, 0, 1 ) 0%, 
-            rgba( 0, 0, 0, 0 ) 100% );
+            rgba( 0, 0, 0, 0 ) 10% );
     content: "\00a0";
     height: 100%;
     position: absolute;
     width: 100%;
+	z-index: 100;
 }
 
 .track > span {
