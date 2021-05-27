@@ -4,7 +4,8 @@ use super::{
 };
 use std::collections::HashMap;
 use std::path::Path;
-use std::fs::read_to_string;
+use std::fs::File;
+use std::io::Read;
 
 pub fn get_songs_on_air(
     cur_decks: &HashMap<Deck, DeckStatus>,
@@ -101,7 +102,7 @@ pub fn get_deck_artwork(deck_id: &Deck, decks: &HashMap<Deck, DeckStatus>) -> Op
     }
 }
 
-pub fn get_deck_assoc_file(deck_id: &Deck, decks: &HashMap<Deck, DeckStatus>, extension: &str) -> Option<String> {
+pub fn get_deck_assoc_file(deck_id: &Deck, decks: &HashMap<Deck, DeckStatus>, extension: &str) -> Option<Vec<u8>> {
     if let Some(deck) = decks.get(deck_id) {
         let fpath = &deck.file_path;
         trace!("Get associated file of deck {}: {} -> {}", deck_id, fpath, extension);
@@ -112,14 +113,20 @@ pub fn get_deck_assoc_file(deck_id: &Deck, decks: &HashMap<Deck, DeckStatus>, ex
         } else {
             let subtitle_path = file_path.with_extension(extension);
             if subtitle_path.exists() {
-                if let Ok(content) = read_to_string(&subtitle_path) {
-                    Some(content)
+                if let Ok(mut handle) = File::open(&subtitle_path) {
+                    let mut res: Vec<u8> = vec![];
+                    if let Ok(_) = handle.read_to_end(&mut res) {
+                        Some(res)
+                    } else {
+                        error!("Could not read {:?}", subtitle_path);
+                        None
+                    }
                 } else {
-                    error!("Could not read subtitles from {:?}", subtitle_path);
+                    error!("Could not open {:?}", subtitle_path);
                     None
                 }
             } else {
-                trace!("Not found subtitles at path {:?}", subtitle_path);
+                trace!("Not found at path {:?}", subtitle_path);
                 None
             }
         }

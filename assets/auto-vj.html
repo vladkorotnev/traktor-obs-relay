@@ -13,12 +13,17 @@
                 vLayer.defaultPlaybackRate = meta.tempo;
                 vLayer.playbackRate = meta.tempo;
                 vLayer.addEventListener('loadeddata', () => {
-                    if(vLayer.readyState == HTMLMediaElement.HAVE_ENOUGH_DATA && players[meta.filePath]) { // can play 100% and not removed yet
+                    if(vLayer.readyState == HTMLMediaElement.HAVE_ENOUGH_DATA && players[meta.filePath] && !vLayer.didStart) { // can play 100% and not removed yet
                         document.getElementById('container').appendChild(vLayer);
                         vLayer.play();
+                        vLayer.didStart = true;
                     }
                 });
+                vLayer.addEventListener('ended',() => {
+                    vLayer.style.display = "none";
+                },false);
                 vLayer.src = getVideoUrl(meta);
+                return vLayer;
             }
 
             // Called when track ends playing
@@ -45,7 +50,7 @@
                     player.playbackRate = meta.tempo;
                     player.defaultPlaybackRate = meta.tempo;
                 }
-                if(meta.elapsedTime && Math.abs(meta.elapsedTime - player.currentTime) > 1) {
+                if(meta.elapsedTime && Math.abs(meta.elapsedTime - player.currentTime) > 1 && meta.elapsedTime < player.duration) {
                     player.currentTime = meta.elapsedTime;
                 }
             }
