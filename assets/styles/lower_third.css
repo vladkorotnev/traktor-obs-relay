@@ -53,7 +53,7 @@ body {
     z-index: 10;
 }
 
-.track ~ .track {
+.track:not(.removing) ~ .track {
     opacity: 0;
     animation: none !important;
     animation-delay: 0;
