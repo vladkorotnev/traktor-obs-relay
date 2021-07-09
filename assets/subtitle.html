@@ -34,14 +34,19 @@
                 legacyWorkerUrl: '/3rdparty/octopus/subtitles-octopus-worker-legacy.js',
                 lossyRender: true,
             };
-            var renderer = new SubtitlesOctopus(renderOpts);
-            renderer.setIsPaused(true, 0);
-            window.addEventListener("resize", (ev) => {
+            var renderer = null;
+
+            function recreateRenderer() {
+                renderer = new SubtitlesOctopus(renderOpts);
                 updateResolution();
-            }, false);
-            window.addEventListener("load", (ev) => {
-                updateResolution();
-            }, false);
+                renderer.setIsPaused(true, 0);
+                window.addEventListener("resize", (ev) => {
+                    updateResolution();
+                }, false);
+                window.addEventListener("load", (ev) => {
+                    updateResolution();
+                }, false);
+            }
 
             // Queue of meta objects for decks that are playing and have subtitles
             var queue = [];
@@ -68,6 +73,7 @@
                 // If not playing any subtitles, play the first queued subtitles
                 current = queue.shift();
 
+                recreateRenderer();
                 renderer.setTrack( current.subtitleData );
                 renderer.setCurrentTime(current.elapsedTime);
 
@@ -86,7 +92,7 @@
             function popTrack(meta) {
                 console.log("Pop track:", meta);
 
-                if(current.filePath == meta.filePath) {
+                if(current && current.filePath == meta.filePath) {
                     // Stop current subtitles
                     stopSubtitles();
                     // If any other are in the queue, start playing them

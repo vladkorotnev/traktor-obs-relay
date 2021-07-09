@@ -53,6 +53,14 @@ body {
     z-index: 10;
 }
 
+.track ~ .track {
+    opacity: 0;
+    animation: none !important;
+    animation-delay: 0;
+    -webkit-animation: none !important;
+    -webkit-animation-delay: 0;
+}
+
 @-webkit-keyframes slide {
     0% { margin-left: 100%; opacity:0; }
     100% { margin-left: 0; opacity:100%; }
