@@ -22,7 +22,13 @@
                 vLayer.addEventListener('ended',() => {
                     vLayer.style.display = "none";
                 },false);
-                vLayer.src = getVideoUrl(meta);
+                var uReader = new XMLHttpRequest()                                                                                                                                                             
+                uReader.open ('GET', getVideoUrl(meta), true)                                                                                                                                                        
+                uReader.responseType = 'blob'                                                                                                                                      
+                uReader.onload = () => {                                                                                                                                                                           
+                    vLayer.src = URL.createObjectURL(uReader.response);                                                                                                                                                       
+                };                                                                                                                                                                                                                                                                                                                                                                                              
+                uReader.send();
                 return vLayer;
             }
 
@@ -50,8 +56,15 @@
                     player.playbackRate = meta.tempo;
                     player.defaultPlaybackRate = meta.tempo;
                 }
-                if(meta.elapsedTime && Math.abs(meta.elapsedTime - player.currentTime) > 1 && meta.elapsedTime < player.duration) {
-                    player.currentTime = meta.elapsedTime;
+                if(player.didStart && 
+                    meta.elapsedTime && 
+                    Math.abs(meta.elapsedTime - player.currentTime) > 1 &&
+                    meta.elapsedTime < player.duration && meta.elapsedTime > 0) {
+
+                    console.log("Drift", meta.elapsedTime, player.currentTime, player.duration);
+                    player.pause();
+                    player.currentTime = meta.elapsedTime.toString();
+                    player.play();
                 }
             }
         </script>
