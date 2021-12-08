@@ -6,7 +6,7 @@ P.S. Features like artwork or subtitle retrieval assume the server is running on
 
 ## Demo video
 
-Check this small [video on YouTube](https://www.youtube.com/watch?v=KKy2x2GCP5A), or have a look at my debut set for Anison Hijack [also on YouTube](https://youtu.be/hcdWe641rPE) which makes use of all available widgets at the time.
+Have a look at the [DJ Set Showcase](https://github.com/vladkorotnev/traktor-obs-relay/wiki/Set-Showcase) of this software!
 
 ## Core architecture
 
