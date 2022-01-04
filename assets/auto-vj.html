@@ -52,19 +52,18 @@
                 var player = players[meta.filePath];
                 if(!player || player.readyState != HTMLMediaElement.HAVE_ENOUGH_DATA) return;
 
-                if(meta.tempo) {
-                    player.playbackRate = meta.tempo;
-                    player.defaultPlaybackRate = meta.tempo;
-                }
+                
                 if(player.didStart && 
                     meta.elapsedTime && 
-                    Math.abs(meta.elapsedTime - player.currentTime) > 1 &&
+                    Math.abs(meta.elapsedTime - player.currentTime) > 0.3 &&
                     meta.elapsedTime < player.duration && meta.elapsedTime > 0) {
 
                     console.log("Drift", meta.elapsedTime, player.currentTime, player.duration);
-                    player.pause();
                     player.currentTime = meta.elapsedTime.toString();
-                    player.play();
+                }
+                if(meta.tempo) {
+                    player.playbackRate = meta.tempo;
+                    player.defaultPlaybackRate = meta.tempo;
                 }
             }
         </script>
