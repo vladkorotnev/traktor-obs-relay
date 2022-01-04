@@ -98,3 +98,7 @@ Place this as a fullscreen overlay over your stream. It will play subtitle files
 ### `auto-vj.html`
 
 Plays video files stored by the same name as the played audio files automatically. Not guaranteed to be 100% in sync for obvious reasons. Supports `webm` and `mp4` with opacity.
+
+### `logger.html`
+
+Creates a timecode log. Open it in your browser (*not in OBS!*) before you start your set to have a timecode list ready for copying into YouTube video descriptions or Mixcloud timestamps. You can also filter played songs by duration to ignore samples, choose whether you want to timestamp based on introducing a track into the mix or when the track goes solo, and offset the whole list by a number of seconds to align with the video/audio file.

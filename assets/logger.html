@@ -1,0 +1,161 @@
+<html>
+    <head>
+        <title>Tracklist Logger</title>
+        <script type="text/javascript" src="api/api-ws.js"></script> 
+        <script type="text/javascript" src="api/api.js"></script>
+        <script type="text/javascript">
+            // from https://stackoverflow.com/a/7313467/565185
+            String.prototype.replaceAll = function(strReplace, strWith) {
+                // See http://stackoverflow.com/a/3561711/556609
+                var esc = strReplace.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+                var reg = new RegExp(esc, 'ig');
+                return this.replace(reg, strWith);
+            };
+
+            var logData = [];
+            var curTracks = {};
+            var startTime = undefined;
+
+            // Called when track ends playing
+            function popTrack(meta) {
+                console.log("Pop track:", meta);
+                let now = Date.now();
+
+                if(curTracks[meta.deck+meta.filePath]) {
+                    curTracks[meta.deck+meta.filePath].endTime = now;
+                    delete curTracks[meta.deck+meta.filePath];
+                }
+
+                let trkIds  = Object.keys(curTracks);
+                if(trkIds.length == 1) { 
+                    // logData will update automatically due to JS object array being by-pointer and not by-value
+                    curTracks[trkIds[0]].soloTimeStamp = now;
+
+                    let curTrk =  curTracks[trkIds[0]];
+                    nowSong.innerText = curTrk.artist + " / " + curTrk.title;
+                    nowStart.innerText = formatTs(curTrk.pushTimeStamp);
+                    nowSolo.innerText = formatTs(curTrk.soloTimeStamp);
+                }
+                else if(trkIds.length == 0) {
+                    nowSong.innerText = "------"
+                    nowStart.innerText = formatTs(null);
+                    nowSolo.innerText = formatTs(null);
+                }
+
+                createLogText();
+            }
+
+            // Called when new track plays
+            function pushTrack(meta) {
+                console.log("Push track:", meta);
+                meta.pushTimeStamp = Date.now();
+
+                if(Object.keys(curTracks) == 0) {
+                    meta.soloTimeStamp = meta.pushTimeStamp;
+                }
+
+                if(!startTime) {
+                    startTime = meta.pushTimeStamp;
+
+                    window.addEventListener('beforeunload', function (e) {
+                        e.preventDefault();
+                        e.returnValue = '';
+                    });
+                }
+
+                curTracks[meta.deck+meta.filePath] = meta;
+                logData.push(meta);
+
+                nowSong.innerText = meta.artist + " / " + meta.title;
+                nowStart.innerText = formatTs(meta.pushTimeStamp);
+                nowSolo.innerText = formatTs(meta.soloTimeStamp);
+
+                createLogText();
+            }
+
+            // Called when bpm changes
+            function onBpmChanged(bpm) {
+                console.log("Change bpm to", bpm);
+            }
+
+            // Called periodically when a track is progressing
+            function trackTick(meta) {
+            }
+
+            function formatTs(ts) {
+                if(!startTime || !ts) return "--:--:--";
+                
+                var delta = Math.floor(ts - startTime);
+                if(delta < 0) return "00:00:00";
+
+                return new Date(delta).toISOString().substr(11, 8);
+            }
+
+            function formatMetaLine(meta) {
+                var rslt = lineFmt.value;
+                let preferredTs = modeSolo.checked ? (meta.soloTimeStamp || meta.pushTimeStamp) : meta.pushTimeStamp;
+                let offsetSeconds = parseInt(offset.value) || 0;
+
+                rslt = rslt.replaceAll("%timecode%", formatTs(preferredTs + offsetSeconds*1000));
+                for(var elm in meta) {
+                    rslt = rslt.replaceAll("%"+elm+"%", meta[elm].toString());
+                }
+                return rslt;
+            }
+
+            function createLogText() {
+                var rslt = "";
+                let filtSeconds = Math.abs(parseInt(minTime.value) || 1) * 1000;
+                let filteredLog = logData.filter(x => !x.endTime || ((x.endTime - x.pushTimeStamp) >= filtSeconds));
+                for(var item of filteredLog) {
+                    rslt += formatMetaLine(item)+"\n";
+                }
+                let txArea = document.getElementById("logView");
+                txArea.value = rslt;
+                txArea.rows = logData.length;
+            }
+
+            function saveSettings() {
+                window.localStorage.minTime = minTime.value;
+                window.localStorage.modeAdded = modeAdded.checked;
+                window.localStorage.modeSolo = modeSolo.checked;
+                window.localStorage.offset = offset.value;
+                window.localStorage.lineFmt = lineFmt.value;
+            }
+
+            function loadSettings() {
+                minTime.value = window.localStorage.minTime || 5;
+                modeAdded.checked = (typeof window.localStorage.modeAdded == "undefined") ? false : (window.localStorage.modeAdded == "true");
+                modeSolo.checked = (typeof window.localStorage.modeSolo == "undefined") ? true : (window.localStorage.modeSolo == "true");
+                offset.value = window.localStorage.offset || 0;
+                lineFmt.value = window.localStorage.lineFmt || "%timecode%     %artist% — %title%";
+            }
+
+            function settingsChanged() {
+                createLogText();
+                saveSettings();
+            }
+
+            window.onload = loadSettings;
+        </script>
+    </head>
+    <body>
+        <h2>Tracklist Logger</h2>
+        <hr/>
+        <h4>Settings</h4>
+        <span>Don't log tracks played for less than: <input id="minTime" type="number" value="1" onchange="settingsChanged();"/> seconds</span>
+        <br/>
+        <span>Prefer timecode of when 
+            <input id="modeAdded" name="mode" type="radio" onchange="settingsChanged();"/> track was added to the mix
+            <input id="modeSolo" name="mode" type="radio" checked="checked" onchange="settingsChanged();"/> track became solo
+        </span>
+        <br/>
+        <span>Start offset: <input id="offset" type="number" onchange="settingsChanged();"/> seconds</span>
+        <br/>
+        <span>Line format: <input id="lineFmt" type="text" value="%timecode%     %artist% — %title%" onchange="settingsChanged();"/></span>
+        <hr/>
+        <h4>Log</h4>
+        <p><strong>Current track: </strong> <em><span id="nowSong">------</span></em> started at <span id="nowStart">--:--:--</span>, went solo at <span id="nowSolo">--:--:--</span></p>
+        <textarea style="width:100%" readonly="readonly" id="logView"></textarea>
+    </body>
+</html>
