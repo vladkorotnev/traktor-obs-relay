@@ -1,0 +1,98 @@
+<html>
+    <head>
+        <title>VFD Display System</title>
+        <script type="text/javascript" src="api/api-ws.js"></script> 
+        <script type="text/javascript" src="api/api.js"></script>
+        <script type="text/javascript" src="vfd.js"></script>
+        <script type="text/javascript">
+			var oldBpm = 0;
+			var queue = [];
+            var current = undefined;
+            
+            function dispNext() {
+				// If nothing more to show, return
+				if(queue.length == 0)  {
+					EFF.run(new DispEffectWipeDown());
+					return;
+				}
+
+				current = queue.shift();
+				
+				EFF.run(new DispEffectWipeUp())
+					.next(new DispEffectSlideInRight({top: "DJ /akasaka in", bottom:"       Anison Hijack"}, 50))
+					.next(new DispEffectPause(2000))
+					.next(new DispEffectWipeDown())
+					.next(new DispEffectResetAndCursor({x: 1, y: 2, show: true}))
+					.next(new DispEffectTyping("Now playing..."))
+					.next(new DispEffectPause(1000))
+					.next(new DispEffectResetAndCursor({x: 1, y: 2, show: true}))
+					.next(new DispEffectTyping(current.artist.substring(0,20)))
+					.next(new DispEffectSlideInRight({top: current.title, topScrolls: true}, 500))
+			}
+            
+            // Called when track ends playing
+            function popTrack(meta) {
+                console.log("Pop track:", meta);
+                
+                if(current && current.filePath == meta.filePath) {
+                   dispNext();
+                } else {
+                   queue = queue.filter(item => item.filePath != meta.filePath);
+                }
+            }
+
+            // Called when new track plays
+            function pushTrack(meta) {
+                console.log("Push track:", meta);
+                queue.push(meta);
+                if(!current) dispNext();
+            }
+
+            // Called when bpm changes
+            function onBpmChanged(bpm) {
+				if(bpm == oldBpm) return;
+				if(oldBpm == 0) {
+					oldBpm = bpm;
+					return;
+				}
+				
+                console.log("Change bpm to", bpm);
+                
+                var promise = undefined;
+                
+                if(bpm > oldBpm) {
+					let topLine = "    Speeding up!    ";
+					let bottomLine = ("New BPM: "+bpm.toString()).padStart(20);
+					promise = EFF.run(new DispEffectWipeUp(25, topLine, bottomLine));
+				}
+				else if(bpm < oldBpm) {
+					let topLine = "   Chilling down!   ";
+					let bottomLine = ("New BPM: "+bpm.toString()).padStart(20);
+					promise = EFF.run(new DispEffectWipeDown(25, topLine, bottomLine));
+				}
+               
+                var pause = new DispEffectPause(1000); 
+                if(current) {
+					var meta = new DispEffectSlideInRight({top: current.title, topScrolls: true, bottom: current.artist}, 50);
+					promise.next(pause).next(meta);
+				} else {
+					promise.next(pause).next(new DispEffectResetAndCursor({x: 1, y: 1, show: false}))
+				}
+                
+                oldBpm = bpm;
+            }
+
+            function trackTick(meta) {
+            }
+            
+            function startPort() {
+				DISPLAY.init();
+				document.getElementById('startBtn').style.display = "none";
+			}
+        </script>
+    </head>
+    <body>
+		<p>Connect CD7220 compatible VFD pole display to a serial port and click:</p>
+		<button onclick="startPort()" id="startBtn">Connect</button>
+    </body>
+</html>
