@@ -8,26 +8,38 @@
 			var oldBpm = 0;
 			var queue = [];
             var current = undefined;
+
+			var stingers = {
+				'D:\\Music\\_Collection\\!Music\\!JAP\\!JCore\\Under Planet\\09. Fang - Palpitation.mp3': [
+					{timestamp: 65.0, exe: () => EFF.run(new DispEffectJustShow({top: "I'm alright", bottom: "Do you mind?"}, 25))},
+					{timestamp: 75.0, exe: () => dispNowp()}
+				]
+			};
             
+			function dispNowp() {
+				EFF.run(new DispEffectResetAndCursor({x: 1, y: 2, show: true}));
+				EFF.run(new DispEffectWipeUp(50, " ", "by " + current.artist.substring(0,20)));
+				EFF.run(new DispEffectSlideInRight({top: "    -= " + current.title + " =-     ", topScrolls: true}, 10));
+			}
+
             function dispNext() {
 				// If nothing more to show, return
 				if(queue.length == 0)  {
 					EFF.run(new DispEffectWipeDown());
+					current = undefined;
 					return;
 				}
 
 				current = queue.shift();
 				
-				EFF.run(new DispEffectWipeUp())
-					.next(new DispEffectSlideInRight({top: "DJ /akasaka in", bottom:"       Anison Hijack"}, 50))
-					.next(new DispEffectPause(2000))
-					.next(new DispEffectWipeDown())
-					.next(new DispEffectResetAndCursor({x: 1, y: 2, show: true}))
-					.next(new DispEffectTyping("Now playing..."))
-					.next(new DispEffectPause(1000))
-					.next(new DispEffectResetAndCursor({x: 1, y: 2, show: true}))
-					.next(new DispEffectTyping(current.artist.substring(0,20)))
-					.next(new DispEffectSlideInRight({top: current.title, topScrolls: true}, 500))
+				EFF.run(new DispEffectWipeUp());
+				EFF.run(new DispEffectSlideInRight({top: "DJ /akasaka in", bottom:"       Anison Hijack"}, 50));
+				EFF.run(new DispEffectPause(2000));
+				EFF.run(new DispEffectWipeDown());
+				EFF.run(new DispEffectResetAndCursor({x: 1, y: 2, show: true}));
+				EFF.run(new DispEffectTyping("Now playing..."));
+				EFF.run(new DispEffectPause(1000));
+				dispNowp();
 			}
             
             // Called when track ends playing
@@ -50,6 +62,7 @@
 
             // Called when bpm changes
             function onBpmChanged(bpm) {
+				return; //disable
 				if(bpm == oldBpm) return;
 				if(oldBpm == 0) {
 					oldBpm = bpm;
@@ -83,16 +96,26 @@
             }
 
             function trackTick(meta) {
+				if(meta.filePath != current.filePath) return;
+
+				if(stingers[meta.filePath]) {
+					let songStinger = stingers[meta.filePath]
+							.filter(x=> Math.abs(x.timestamp - meta.elapsedTime) <= 0.5)[0];
+					if(songStinger && !songStinger.bonk) {
+						songStinger.exe();
+					}
+				}
             }
             
             function startPort() {
 				DISPLAY.init();
 				document.getElementById('startBtn').style.display = "none";
+				document.getElementById('hint').style.display = "none";
 			}
         </script>
     </head>
     <body>
-		<p>Connect CD7220 compatible VFD pole display to a serial port and click:</p>
+		<p id="hint">Connect CD7220 compatible VFD pole display to a serial port and click:</p>
 		<button onclick="startPort()" id="startBtn">Connect</button>
     </body>
 </html>

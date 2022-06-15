@@ -40,6 +40,7 @@
 
             // Called when bpm changes
             function onBpmChanged(bpm) {
+                if(bpm < 100) bpm *= 2;
                 if(nowBpm == bpm) return;
 
                 console.log("Change bpm to", bpm);

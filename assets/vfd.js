@@ -185,6 +185,16 @@ class DispEffectSlideInRight extends DispEffect {
 	}
 }
 
+class DispEffectJustShow extends DispEffect {
+	constructor(texts) {
+		super(0, (disp, frame) => {
+			if(texts.bottom) disp.setBottomLine(texts.bottom);
+			if(texts.top) disp.setTopLine(texts.top, texts.topScrolls);
+			return false;
+		});
+	}
+}
+
 class DispEffectFlipIn extends DispEffect {
 	constructor(texts, interval, maxFrames, topScrolls) {
 		let firstLetterCode = "A".charCodeAt(0);
@@ -262,7 +272,6 @@ class DispEffectWipeDown extends DispEffect {
 				case 7:
 					disp.setBottomLine(bottomText || " ".repeat(width));
 					return false;
-					break;
 			}
 			
 			return true;
@@ -306,7 +315,6 @@ class DispEffectWipeUp extends DispEffect {
 				case 7:
 					disp.setTopLine(topText || " ".repeat(width));
 					return false;
-					break;
 			}
 			
 			return true;
@@ -326,6 +334,7 @@ class DispEffector {
 			this.nowEffect = effect.run(this.disp);
 		} else {
 			this.nowEffect = this.nowEffect.next(effect);
+			console.log("append", effect);
 		}
 		return this.nowEffect;
 	}
