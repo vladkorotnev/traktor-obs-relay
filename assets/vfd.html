@@ -4,17 +4,12 @@
         <script type="text/javascript" src="api/api-ws.js"></script> 
         <script type="text/javascript" src="api/api.js"></script>
         <script type="text/javascript" src="vfd.js"></script>
+        <script type="text/javascript" src="assparse.js"></script>
         <script type="text/javascript">
 			var oldBpm = 0;
 			var queue = [];
             var current = undefined;
-
-			var stingers = {
-				'D:\\Music\\_Collection\\!Music\\!JAP\\!JCore\\Under Planet\\09. Fang - Palpitation.mp3': [
-					{timestamp: 65.0, exe: () => EFF.run(new DispEffectJustShow({top: "I'm alright", bottom: "Do you mind?"}, 25))},
-					{timestamp: 75.0, exe: () => dispNowp()}
-				]
-			};
+			var currentSubtitleLooper = undefined;
             
 			function dispNowp() {
 				EFF.run(new DispEffectResetAndCursor({x: 1, y: 2, show: true}));
@@ -23,6 +18,10 @@
 			}
 
             function dispNext() {
+				if(currentSubtitleLooper) {
+					currentSubtitleLooper.stopLooping();
+					currentSubtitleLooper = undefined;
+				}
 				// If nothing more to show, return
 				if(queue.length == 0)  {
 					EFF.run(new DispEffectWipeDown());
@@ -40,6 +39,44 @@
 				EFF.run(new DispEffectTyping("Now playing..."));
 				EFF.run(new DispEffectPause(1000));
 				dispNowp();
+
+				startSubtitleIfNeeded();
+			}
+
+			function startSubtitleIfNeeded() {
+				if(!current.subtitleData || currentSubtitleLooper) return;
+
+				currentSubtitleLooper = new AssLooper(current.subtitleData, subtitleCallback, current.tempo);
+				currentSubtitleLooper.startLooping();
+			}
+
+			function subtitleCallback(line) {
+				var rslt = null;
+				var text = line.text.split(/\\N/gi, 2);
+				while(text.length < 2) text.push('');
+
+				if(line.effect == "WipeUp") {
+					rslt = new DispEffectWipeUp(50, text[0], text[1]);
+				} else if(line.effect == "WipeDown") {
+					rslt = new DispEffectWipeDown(50, text[0], text[1]);
+				} else if(line.effect == "JustShow") {
+					rslt = new DispEffectJustShow({bottom: text[1], top: text[0]});
+				} else if(line.effect == "FlipIn") {
+					rslt = new DispEffectFlipIn({bottom: text[1], top: text[0]});
+				} else if(line.effect == "Typing") {
+					rslt = new DispEffectTyping(text[0]);
+				} else if(line.effect == "Reset") {
+					let params = text[0].split(',').map(x => parseInt(x));
+					rslt = new DispEffectResetAndCursor({x: params[0], y: params[1], show: (params[2] > 0)});
+				} else if(line.effect == "NowPlaying") {
+					dispNowp();
+					rslt = null;
+				}
+				
+
+				if(rslt) {
+					EFF.run(rslt);
+				}
 			}
             
             // Called when track ends playing
@@ -57,52 +94,77 @@
             function pushTrack(meta) {
                 console.log("Push track:", meta);
                 queue.push(meta);
+
+				let xhr = new XMLHttpRequest();
+                xhr.open("GET", getSubtitleUrl(meta));
+                xhr.onload = () => {
+                    if (xhr.status == 200) {
+                        let parser = new AssParse(xhr.response, VFDLineFilter);
+						parser.parse();
+						if(parser.events.length == 0) return;
+						meta.subtitleData = parser.events;
+
+                        console.log("Found subtitles for ", meta);
+
+						if(current == meta) {
+							startSubtitleIfNeeded();
+						}
+                    }
+                };
+                xhr.onerror = console.error;
+                xhr.send();
+
                 if(!current) dispNext();
             }
 
             // Called when bpm changes
             function onBpmChanged(bpm) {
 				return; //disable
-				if(bpm == oldBpm) return;
-				if(oldBpm == 0) {
-					oldBpm = bpm;
-					return;
-				}
+				// if(bpm == oldBpm) return;
+				// if(oldBpm == 0) {
+				// 	oldBpm = bpm;
+				// 	return;
+				// }
 				
-                console.log("Change bpm to", bpm);
+                // console.log("Change bpm to", bpm);
                 
-                var promise = undefined;
+                // var promise = undefined;
                 
-                if(bpm > oldBpm) {
-					let topLine = "    Speeding up!    ";
-					let bottomLine = ("New BPM: "+bpm.toString()).padStart(20);
-					promise = EFF.run(new DispEffectWipeUp(25, topLine, bottomLine));
-				}
-				else if(bpm < oldBpm) {
-					let topLine = "   Chilling down!   ";
-					let bottomLine = ("New BPM: "+bpm.toString()).padStart(20);
-					promise = EFF.run(new DispEffectWipeDown(25, topLine, bottomLine));
-				}
+                // if(bpm > oldBpm) {
+				// 	let topLine = "    Speeding up!    ";
+				// 	let bottomLine = ("New BPM: "+bpm.toString()).padStart(20);
+				// 	promise = EFF.run(new DispEffectWipeUp(25, topLine, bottomLine));
+				// }
+				// else if(bpm < oldBpm) {
+				// 	let topLine = "   Chilling down!   ";
+				// 	let bottomLine = ("New BPM: "+bpm.toString()).padStart(20);
+				// 	promise = EFF.run(new DispEffectWipeDown(25, topLine, bottomLine));
+				// }
                
-                var pause = new DispEffectPause(1000); 
-                if(current) {
-					var meta = new DispEffectSlideInRight({top: current.title, topScrolls: true, bottom: current.artist}, 50);
-					promise.next(pause).next(meta);
-				} else {
-					promise.next(pause).next(new DispEffectResetAndCursor({x: 1, y: 1, show: false}))
-				}
+                // var pause = new DispEffectPause(1000); 
+                // if(current) {
+				// 	var meta = new DispEffectSlideInRight({top: current.title, topScrolls: true, bottom: current.artist}, 50);
+				// 	promise.next(pause).next(meta);
+				// } else {
+				// 	promise.next(pause).next(new DispEffectResetAndCursor({x: 1, y: 1, show: false}))
+				// }
                 
-                oldBpm = bpm;
+                // oldBpm = bpm;
             }
 
             function trackTick(meta) {
-				if(meta.filePath != current.filePath) return;
-
-				if(stingers[meta.filePath]) {
-					let songStinger = stingers[meta.filePath]
-							.filter(x=> Math.abs(x.timestamp - meta.elapsedTime) <= 0.5)[0];
-					if(songStinger && !songStinger.bonk) {
-						songStinger.exe();
+				if(!current || meta.filePath != current.filePath) {
+					let idx = queue.findIndex(x => x.filePath == meta.filePath);
+                    if(idx > -1) {
+                        meta.subtitleData = queue[idx].subtitleData;
+                        queue[idx] = meta;
+                    }
+					return;
+				} else {
+					current.tempo = meta.tempo;
+					current.elapsedTime = meta.elapsedTime;
+					if(currentSubtitleLooper) {
+						currentSubtitleLooper.reportTimeAndTempo(current.elapsedTime, current.tempo);
 					}
 				}
             }
