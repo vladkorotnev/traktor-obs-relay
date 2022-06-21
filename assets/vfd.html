@@ -1,183 +1,153 @@
 <html>
-    <head>
-        <title>VFD Display System</title>
-        <script type="text/javascript" src="api/api-ws.js"></script> 
-        <script type="text/javascript" src="api/api.js"></script>
-        <script type="text/javascript" src="vfd.js"></script>
-        <script type="text/javascript" src="assparse.js"></script>
-        <script type="text/javascript">
-			var oldBpm = 0;
-			var queue = [];
-            var current = undefined;
-			var currentSubtitleLooper = undefined;
+<head>
+    <title>VFD Display System</title>
+    <script type="text/javascript" src="api/api-ws.js"></script> 
+    <script type="text/javascript" src="api/api.js"></script>
+    <script type="text/javascript" src="vfd.js"></script>
+    <script type="text/javascript" src="assparse.js"></script>
+    <script type="text/javascript">
+        var oldBpm = 0;
+        var queue = [];
+        var current = undefined;
+        var currentSubtitleLooper = undefined;
+        
+        function dispNowp() {
+            EFF.run(new DispEffectResetAndCursor({x: 1, y: 2, show: true}));
+            EFF.run(new DispEffectWipeUp(50, " ", "by " + current.artist.substring(0,20)));
+            EFF.run(new DispEffectSlideInRight({top: "    -= " + current.title + " =-     ", topScrolls: true}, 10));
+        }
+        
+        function dispNext() {
+            if(currentSubtitleLooper) {
+                currentSubtitleLooper.stopLooping();
+                currentSubtitleLooper = undefined;
+            }
+            // If nothing more to show, return
+            if(queue.length == 0)  {
+                EFF.run(new DispEffectWipeDown());
+                current = undefined;
+                return;
+            }
             
-			function dispNowp() {
-				EFF.run(new DispEffectResetAndCursor({x: 1, y: 2, show: true}));
-				EFF.run(new DispEffectWipeUp(50, " ", "by " + current.artist.substring(0,20)));
-				EFF.run(new DispEffectSlideInRight({top: "    -= " + current.title + " =-     ", topScrolls: true}, 10));
-			}
-
-            function dispNext() {
-				if(currentSubtitleLooper) {
-					currentSubtitleLooper.stopLooping();
-					currentSubtitleLooper = undefined;
-				}
-				// If nothing more to show, return
-				if(queue.length == 0)  {
-					EFF.run(new DispEffectWipeDown());
-					current = undefined;
-					return;
-				}
-
-				current = queue.shift();
-				
-				EFF.run(new DispEffectWipeUp());
-				EFF.run(new DispEffectSlideInRight({top: "DJ /akasaka in", bottom:"       Anison Hijack"}, 50));
-				EFF.run(new DispEffectPause(2000));
-				EFF.run(new DispEffectWipeDown());
-				EFF.run(new DispEffectResetAndCursor({x: 1, y: 2, show: true}));
-				EFF.run(new DispEffectTyping("Now playing..."));
-				EFF.run(new DispEffectPause(1000));
-				dispNowp();
-
-				startSubtitleIfNeeded();
-			}
-
-			function startSubtitleIfNeeded() {
-				if(!current.subtitleData || currentSubtitleLooper) return;
-
-				currentSubtitleLooper = new AssLooper(current.subtitleData, subtitleCallback, current.tempo);
-				currentSubtitleLooper.startLooping();
-			}
-
-			function subtitleCallback(line) {
-				var rslt = null;
-				var text = line.text.split(/\\N/gi, 2);
-				while(text.length < 2) text.push('');
-
-				if(line.effect == "WipeUp") {
-					rslt = new DispEffectWipeUp(50, text[0], text[1]);
-				} else if(line.effect == "WipeDown") {
-					rslt = new DispEffectWipeDown(50, text[0], text[1]);
-				} else if(line.effect == "JustShow") {
-					rslt = new DispEffectJustShow({bottom: text[1], top: text[0]});
-				} else if(line.effect == "FlipIn") {
-					rslt = new DispEffectFlipIn({bottom: text[1], top: text[0]});
-				} else if(line.effect == "Typing") {
-					rslt = new DispEffectTyping(text[0]);
-				} else if(line.effect == "Reset") {
-					let params = text[0].split(',').map(x => parseInt(x));
-					rslt = new DispEffectResetAndCursor({x: params[0], y: params[1], show: (params[2] > 0)});
-				} else if(line.effect == "NowPlaying") {
-					dispNowp();
-					rslt = null;
-				}
-				
-
-				if(rslt) {
-					EFF.run(rslt);
-				}
-			}
+            current = queue.shift();
             
-            // Called when track ends playing
-            function popTrack(meta) {
-                console.log("Pop track:", meta);
-                
-                if(current && current.filePath == meta.filePath) {
-                   dispNext();
-                } else {
-                   queue = queue.filter(item => item.filePath != meta.filePath);
+            EFF.run(new DispEffectWipeUp());
+            EFF.run(new DispEffectSlideInRight({top: "DJ /akasaka in", bottom:"       Anison Hijack"}, 50));
+            EFF.run(new DispEffectPause(2000));
+            EFF.run(new DispEffectWipeDown());
+            EFF.run(new DispEffectResetAndCursor({x: 1, y: 2, show: true}));
+            EFF.run(new DispEffectTyping("Now playing..."));
+            EFF.run(new DispEffectPause(1000));
+            dispNowp();
+            
+            startSubtitleIfNeeded();
+        }
+        
+        function startSubtitleIfNeeded() {
+            if(!current.subtitleData || currentSubtitleLooper) return;
+            
+            currentSubtitleLooper = new AssLooper(current.subtitleData, subtitleCallback, current.tempo);
+            currentSubtitleLooper.startLooping();
+        }
+        
+        function subtitleCallback(line) {
+            var rslt = null;
+            var text = line.text.split(/\\N/gi, 2);
+            while(text.length < 2) text.push('');
+            let durationMs = (line.end - line.start) * 1000.0;
+
+            if(line.effect == "WipeUp") {
+                rslt = new DispEffectWipeUp(durationMs / 8, text[0], text[1]);
+            } else if(line.effect == "WipeDown") {
+                rslt = new DispEffectWipeDown(durationMs / 8, text[0], text[1]);
+            } else if(line.effect == "JustShow") {
+                rslt = new DispEffectJustShow({bottom: text[1], top: text[0]});
+            } else if(line.effect == "FlipIn") {
+                rslt = new DispEffectFlipIn({bottom: text[1], top: text[0]}, durationMs / 57);
+            } else if(line.effect == "Typing") {
+                rslt = new DispEffectTyping(text[0], durationMs/text[0].length);
+            } else if(line.effect == "Reset") {
+                let params = text[0].split(',').map(x => parseInt(x));
+                rslt = new DispEffectResetAndCursor({x: params[0], y: params[1], show: (params[2] > 0)});
+            } else if(line.effect == "NowPlaying") {
+                dispNowp();
+                rslt = null;
+            }
+            
+            
+            if(rslt) {
+                EFF.run(rslt);
+            }
+        }
+        
+        // Called when track ends playing
+        function popTrack(meta) {
+            console.log("Pop track:", meta);
+            
+            if(current && current.filePath == meta.filePath) {
+                dispNext();
+            } else {
+                queue = queue.filter(item => item.filePath != meta.filePath);
+            }
+        }
+        
+        // Called when new track plays
+        function pushTrack(meta) {
+            console.log("Push track:", meta);
+            queue.push(meta);
+            
+            let xhr = new XMLHttpRequest();
+            xhr.open("GET", getSubtitleUrl(meta));
+            xhr.onload = () => {
+                if (xhr.status == 200) {
+                    let parser = new AssParse(xhr.response, VFDLineFilter);
+                    parser.parse();
+                    if(parser.events.length == 0) return;
+                    meta.subtitleData = parser.events;
+                    
+                    console.log("Found subtitles for ", meta);
+                    
+                    if(current == meta) {
+                        startSubtitleIfNeeded();
+                    }
+                }
+            };
+            xhr.onerror = console.error;
+            xhr.send();
+            
+            if(!current) dispNext();
+        }
+        
+        // Called when bpm changes
+        function onBpmChanged(bpm) {
+        }
+        
+        function trackTick(meta) {
+            if(!current || meta.filePath != current.filePath) {
+                let idx = queue.findIndex(x => x.filePath == meta.filePath);
+                if(idx > -1) {
+                    meta.subtitleData = queue[idx].subtitleData;
+                    queue[idx] = meta;
+                }
+                return;
+            } else {
+                current.tempo = meta.tempo;
+                current.elapsedTime = meta.elapsedTime;
+                if(currentSubtitleLooper) {
+                    currentSubtitleLooper.reportTimeAndTempo(current.elapsedTime, current.tempo);
                 }
             }
-
-            // Called when new track plays
-            function pushTrack(meta) {
-                console.log("Push track:", meta);
-                queue.push(meta);
-
-				let xhr = new XMLHttpRequest();
-                xhr.open("GET", getSubtitleUrl(meta));
-                xhr.onload = () => {
-                    if (xhr.status == 200) {
-                        let parser = new AssParse(xhr.response, VFDLineFilter);
-						parser.parse();
-						if(parser.events.length == 0) return;
-						meta.subtitleData = parser.events;
-
-                        console.log("Found subtitles for ", meta);
-
-						if(current == meta) {
-							startSubtitleIfNeeded();
-						}
-                    }
-                };
-                xhr.onerror = console.error;
-                xhr.send();
-
-                if(!current) dispNext();
-            }
-
-            // Called when bpm changes
-            function onBpmChanged(bpm) {
-				return; //disable
-				// if(bpm == oldBpm) return;
-				// if(oldBpm == 0) {
-				// 	oldBpm = bpm;
-				// 	return;
-				// }
-				
-                // console.log("Change bpm to", bpm);
-                
-                // var promise = undefined;
-                
-                // if(bpm > oldBpm) {
-				// 	let topLine = "    Speeding up!    ";
-				// 	let bottomLine = ("New BPM: "+bpm.toString()).padStart(20);
-				// 	promise = EFF.run(new DispEffectWipeUp(25, topLine, bottomLine));
-				// }
-				// else if(bpm < oldBpm) {
-				// 	let topLine = "   Chilling down!   ";
-				// 	let bottomLine = ("New BPM: "+bpm.toString()).padStart(20);
-				// 	promise = EFF.run(new DispEffectWipeDown(25, topLine, bottomLine));
-				// }
-               
-                // var pause = new DispEffectPause(1000); 
-                // if(current) {
-				// 	var meta = new DispEffectSlideInRight({top: current.title, topScrolls: true, bottom: current.artist}, 50);
-				// 	promise.next(pause).next(meta);
-				// } else {
-				// 	promise.next(pause).next(new DispEffectResetAndCursor({x: 1, y: 1, show: false}))
-				// }
-                
-                // oldBpm = bpm;
-            }
-
-            function trackTick(meta) {
-				if(!current || meta.filePath != current.filePath) {
-					let idx = queue.findIndex(x => x.filePath == meta.filePath);
-                    if(idx > -1) {
-                        meta.subtitleData = queue[idx].subtitleData;
-                        queue[idx] = meta;
-                    }
-					return;
-				} else {
-					current.tempo = meta.tempo;
-					current.elapsedTime = meta.elapsedTime;
-					if(currentSubtitleLooper) {
-						currentSubtitleLooper.reportTimeAndTempo(current.elapsedTime, current.tempo);
-					}
-				}
-            }
-            
-            function startPort() {
-				DISPLAY.init();
-				document.getElementById('startBtn').style.display = "none";
-				document.getElementById('hint').style.display = "none";
-			}
-        </script>
-    </head>
-    <body>
-		<p id="hint">Connect CD7220 compatible VFD pole display to a serial port and click:</p>
-		<button onclick="startPort()" id="startBtn">Connect</button>
-    </body>
+        }
+        
+        function startPort() {
+            DISPLAY.init();
+            document.getElementById('startBtn').style.display = "none";
+            document.getElementById('hint').style.display = "none";
+        }
+    </script>
+</head>
+<body>
+    <p id="hint">Connect CD7220 compatible VFD pole display to a serial port and click:</p>
+    <button onclick="startPort()" id="startBtn">Connect</button>
+</body>
 </html>

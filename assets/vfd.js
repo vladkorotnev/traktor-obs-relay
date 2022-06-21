@@ -1,11 +1,14 @@
 if(!'serial' in navigator) { alert("Browser doesn't support serial port function!"); }
 
+/// Driver for the CD7220 based VFD pole customer display
 class CD7220 {
 	constructor() {
 		this.baud = 9600;
 		this.encoder = new TextEncoder();
 		
 		this.SEQ = {
+			// Sequences from datasheet in native CD7220 mode
+
 			OVERWRITE: "\x1B\x11",
 			VSCROLL: "\x1B\x12",
 			HSCROLL: "\x1B\x13",
@@ -37,6 +40,7 @@ class CD7220 {
 		};
 	}
 	
+	/// Ask the user to select a serial port and connect to a CD7220 controller on that port
 	async init() {
 		try {
 			let port = await navigator.serial.requestPort();
@@ -50,10 +54,12 @@ class CD7220 {
 		}
 	}
 	
+	/// Convert `str` into an array of bytes
 	encode(str) {
 		return new Uint8Array(str.split('').map((char) => char.charCodeAt(0)));
 	}
 	
+	/// Send a raw string into the CD7220 port
 	sendRawStr(str) {
 		this.writer.ready
 			.then(() => {
@@ -64,14 +70,17 @@ class CD7220 {
 			});
 	}
 	
+	/// Toggle showing the cursor
 	setShowCursor(show) {
 		this.sendRawStr(this.SEQ.CURSOR_VISIBLE(show));
 	}
 	
+	/// Clear the screen
 	clear() {
 		this.sendRawStr(this.SEQ.CLEAR_ALL);
 	}
 	
+	/// Set the top line string to `text`, scrolling if `scroll` is on, and set the display to fixed line mode
 	setTopLine(line, scroll) {
 		if(scroll) {
 			this.sendRawStr(this.SEQ.STR_UPPER_SCROLL_SET(line));
@@ -80,20 +89,27 @@ class CD7220 {
 		}
 	}
 	
+	/// Set the bottom line string to `text` and set the display to fixed line mode
 	setBottomLine(line) {
 		this.sendRawStr(this.SEQ.STR_LOWER_SET(line));
 	}
 	
+	/// Set the display to terminal mode with overwrite on overflow
 	overwrite() { this.sendRawStr(this.SEQ.OVERWRITE); }
+	/// Set the display to terminal mode with line scroll on overflow
 	vScroll() { this.sendRawStr(this.SEQ.VSCROLL); }
+	/// Set the display to terminal mode with column scroll on overflow
 	hScroll() { this.sendRawStr(this.SEQ.HSCROLL); }
 	
+	/// Set the cursor position to column `x` (1~20), row `y` (1 or 2)
 	setCursor(x, y) {
 		if(x < 1 || x > 20 || y < 1 || y > 2) console.error("Invalid cursor coords", x, y);
 		this.sendRawStr(this.SEQ.CURSOR_SET(x, y));
 	}
 }
 
+// Honestly I don't know why I made this effect object model in such a weird way
+// But now it seems to work reliably so any improvements are a TODO!
 class EffectPromise extends Promise {
 	constructor(fn, on) {
 		super(fn);
@@ -109,7 +125,11 @@ class EffectPromise extends Promise {
 	}
 }
 
+/// A display effect
 class DispEffect {
+	/// Construct a display effect
+	/// * `interval` — interval (in ms) to call the render function
+	/// * `frame` — render function (arguments: display, frameNumber). Return `false` if end of effect.
 	constructor(interval, frame) {
 		this.interval = interval;
 		this.frame = frame;
@@ -130,13 +150,17 @@ class DispEffect {
 	}
 }
 
+/// Effect to pause the effect chain for a set number of ms
 class DispEffectPause extends DispEffect {
 	constructor(delay) {
 		super(delay, () => false);
 	}
 }
 
+/// Effect to clear the screen and set the cursor position/display
 class DispEffectResetAndCursor extends DispEffect {
+	/// Sets the cursor position and display state and clears the screen.
+	/// * `cursor` — contains `x` (1~20), `y` (1 or 2) and `show` (boolean)
 	constructor(cursor) {
 		super(0, (disp, frame) => {
 			disp.clear();
@@ -146,7 +170,9 @@ class DispEffectResetAndCursor extends DispEffect {
 	}
 }
 
+/// Effect to send bytes to the screen one by one at a set interval
 class DispEffectTyping extends DispEffect {
+	/// Sends the `text` symbol by symbol every `interval` ms.
 	constructor(text, interval) {
 		super(interval || 50, (disp, frame) => {
 			if(frame == text.length) return false;
@@ -157,7 +183,10 @@ class DispEffectTyping extends DispEffect {
 	}
 }
 
+/// Effect to slide in one or two lines from the right to the left
 class DispEffectSlideInRight extends DispEffect {
+	/// Slide in `texts.bottom` and/or `texts.top` from right to left.
+	/// Every `interval` ms move one column to the left, unused columns padded with `pad` (default empty).
 	constructor(texts, interval, pad) {
 		pad = pad || ' ';
 		let width = 20;
@@ -185,7 +214,9 @@ class DispEffectSlideInRight extends DispEffect {
 	}
 }
 
+/// Effect to just replace one or two lines on the display
 class DispEffectJustShow extends DispEffect {
+	/// Show `texts.top` and/or `texts.bottom` on the display at once.
 	constructor(texts) {
 		super(0, (disp, frame) => {
 			if(texts.bottom) disp.setBottomLine(texts.bottom);
@@ -195,7 +226,11 @@ class DispEffectJustShow extends DispEffect {
 	}
 }
 
+/// Flip through characters in sequence, leaving only correct ones behind
 class DispEffectFlipIn extends DispEffect {
+	/// Show `texts.top` and/or `texts.bottom` by flipping through ASCII symbols
+	/// at `interval` rate, but in `maxFrames` iterations. 
+	/// If `topScrolls` is set, scroll the top line when finished.
 	constructor(texts, interval, maxFrames, topScrolls) {
 		let firstLetterCode = "A".charCodeAt(0);
 		let lastLetterCode = "z".charCodeAt(0);
@@ -236,7 +271,9 @@ class DispEffectFlipIn extends DispEffect {
 	}
 }
 
+/// Wipe the screen with solid fill top to bottom.
 class DispEffectWipeDown extends DispEffect {
+	/// Wipe the screen with solid fill top to bottom, optionally leaving behind `topText` and `bottomText`.
 	constructor(interval, topText, bottomText) {
 		let width = 20;
 		super(interval || 50, (disp, frame) => {
@@ -279,7 +316,9 @@ class DispEffectWipeDown extends DispEffect {
 	}
 }
 
+/// Wipe the screen with solid fill bottom to top.
 class DispEffectWipeUp extends DispEffect {
+	/// Wipe the screen with solid fill bottom to top, optionally leaving behind `topText` and `bottomText`.
 	constructor(interval, topText, bottomText) {
 		let width = 20;
 		super(interval || 50, (disp, frame) => {
@@ -322,19 +361,21 @@ class DispEffectWipeUp extends DispEffect {
 	}
 }
 
-
+/// Sequencer to run display effects
 class DispEffector {
+	/// Run effects on the `disp` display
 	constructor(disp) {
 		this.disp = disp;
 		this.nowEffect = undefined;
 	}
 	
+	/// Run an effect, or enqueue it if the previous one isn't yet completed
 	run(effect) {
 		if(!this.nowEffect) {
 			this.nowEffect = effect.run(this.disp);
 		} else {
 			this.nowEffect = this.nowEffect.next(effect);
-			console.log("append", effect);
+			//console.log("append", effect);
 		}
 		return this.nowEffect;
 	}
@@ -342,3 +383,6 @@ class DispEffector {
 
 const DISPLAY = new CD7220();
 const EFF = new DispEffector(DISPLAY);
+
+/// Object filter for AssParse to exclude all but VFD lines
+const VFDLineFilter = (ev) => {return (ev._type == AssEventType.Comment && ev.style == "VFD") ? ev : null};
