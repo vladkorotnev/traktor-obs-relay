@@ -1,0 +1,74 @@
+<html>
+  <head>
+    <title>Traktor Widgets</title>
+    <script type="text/javascript" src="api/api-ws.js"></script>
+    <script type="text/javascript" src="api/api.js"></script>
+    <script type="text/javascript">
+      // Called when new track plays
+      function pushTrack(meta) {
+        document.getElementById('now-playing').innerText = meta.artist + " - " + meta.title;
+      }
+      
+      // Called when bpm changes
+      function onBpmChanged(bpm) {
+        document.getElementById('bpm').innerText = bpm.toString();
+      }
+    </script>
+  </head>
+  <body>
+    <h1>Traktor Widget Server</h1>
+    <h2>Looks like it works?</h2>
+    <p>Now playing: <span id="now-playing">-----</span>, BPM: <span id="bpm">???</span></p>
+    <hr><br>
+    <h3>List of links to widgets:</h3>
+    <em>(right-click and copy the link address, then paste into OBS browser source)</em>
+    <ul>
+      <li>
+        <a href="auto-vj.html" target="_blank">AutoVJ</a>
+        <p class="hint">Automatically play a video file with the same name as the currently playing audio file</p>
+      </li>
+      <li>
+        <a href="bpm.html" target="_blank">BPM</a>
+        <p class="hint">Shows the primary BPM of the mix (set in the Master Clock of the mixer)</p>
+      </li>
+      <li>
+        <a href="bpm_headbang.html" target="_blank">BPM headbang</a>
+        <p class="hint">A headbang GIF synced to the BPM <em>(I use this one, so please take care to prepare your own graphics! :-)</em></p>
+      </li>
+      <li>
+        <a href="column.html" target="_blank">History Column</a>
+        <p class="hint">Shows a list of previously played tracks (but not current ones)</p>
+      </li>
+      <li>
+        <a href="lower_third.html" target="_blank">Lower Third</a>
+        <p class="hint">Shows a row of currently playing tracks</p>
+      </li>
+      <li>
+        <a href="lower_third_artwork.html" target="_blank">Lower Third Artwork</a>
+        <p class="hint">Shows a row of currently playing tracks with album art</p>
+      </li>
+      <li>
+        <a href="video-intro.html" target="_blank">Video Intro</a>
+        <p class="hint">Cover the whole screen with black and start playing the video located in the <a href="intro.webm">assets/intro.webm</a> file once the first track starts (no BPM sync whatsoever)</p>
+      </li>
+      <li>
+        <a href="subtitle.html" target="_blank">Subtitles</a>
+        <p class="hint">Render animated <a href="https://en.wikipedia.org/wiki/SubStation_Alpha" target="_blank">ASS</a> format subtitles in sync with a track</p>
+      </li>
+    </ul>
+    <h3>List of links to utilities:</h3>
+    <em>(open them in new tab, <strong>not in OBS, before</strong> starting your gig. <strong>Warning:</strong> it is advised to use Chromium with the <tt>--disable-background-timer-throttling</tt> command line flag.)</em>
+    <ul>
+      <li>
+        <a href="logger.html" target="_blank">Track Logger</a>
+        <p class="hint">Create a log of your played tracks to paste on YouTube or Mixcloud easily.</p>
+      </li>
+      <li>
+        <a href="vfd.html" target="_blank">VFD Driver</a>
+        <p class="hint">Use a <a href="https://www.partnertechcorp.com/products/pos-peripherals/customer-display/cd-7220/" target="_blank">CD7220 series</a> compatible POS Customer Display to show subtitles and/or track titles!</p>
+      </li>
+    </ul>
+    <h3>How do I customize all this?</h3>
+    <p>Sadly for the time being you'd have to open the <tt>assets</tt> folder and edit the HTML/CSS files directly to suit your needs. However I hope this project provides a good framework and starting point to empowering your gigs!</p>
+  </body>
+</html>
