@@ -52,7 +52,7 @@
         
         function subtitleCallback(line) {
             var rslt = null;
-            var text = line.text.split(/\\N/gi, 2);
+            var text = line.text.replace(/\n/g, '').replace(/\r/g, '').split(/\\N/gi, 2);
             while(text.length < 2) text.push('');
             let durationMs = (line.end - line.start) * 1000.0;
 
@@ -69,6 +69,9 @@
             } else if(line.effect == "Reset") {
                 let params = text[0].split(',').map(x => parseInt(x));
                 rslt = new DispEffectResetAndCursor({x: params[0], y: params[1], show: (params[2] > 0)});
+            } else if(line.effect == "Cursor") {
+                let params = text[0].split(',').map(x => parseInt(x));
+                rslt = new DispEffectCursor({x: params[0], y: params[1], show: (params[2] > 0)});
             } else if(line.effect == "NowPlaying") {
                 dispNowp();
                 rslt = null;

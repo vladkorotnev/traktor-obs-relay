@@ -170,6 +170,18 @@ class DispEffectResetAndCursor extends DispEffect {
 	}
 }
 
+/// Effect to set the cursor position/display
+class DispEffectCursor extends DispEffect {
+	/// Sets the cursor position and display state.
+	/// * `cursor` — contains `x` (1~20), `y` (1 or 2) and `show` (boolean)
+	constructor(cursor) {
+		super(0, (disp, frame) => {
+			disp.setCursor(cursor.x, cursor.y);
+			disp.setShowCursor(cursor.show);
+		});
+	}
+}
+
 /// Effect to send bytes to the screen one by one at a set interval
 class DispEffectTyping extends DispEffect {
 	/// Sends the `text` symbol by symbol every `interval` ms.

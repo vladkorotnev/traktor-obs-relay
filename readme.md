@@ -124,7 +124,8 @@ The VFD driver also checks for presence of subtitles same as `subtitle.html` doe
     * `JustShow`: Show the subtitle text at once.
     * `FlipIn`: Animate flipping through all ASCII characters, leaving behind the provided subtitle text. Subtitle duration specifies the duration of animation.
     * `Typing`: Animate typing the text onto the screen for the duration of the subtitle. `\N` does *not* work with this effect. The display should be in terminal mode, so it's recommended to use `Reset` before this effect.
-    * `Reset`: Clear the display and set the cursor position/display. The text **must** be in the format of `X,Y,ShowCursor` numbers, where `X` is column 1~20, `Y` is row 1~2, `ShowCursor` is 1 to show or 0 to hide. *Example:* `1,2,1` will show blinking cursor at row 2 in the very beginning of the line.
+    * `Reset`: Clear the display and set the cursor position/display. Syntax is the same as of the `Cursor` command.
+    * `Cursor`: Set the cursor position/visibility. The text **must** be in the format of `X,Y,ShowCursor` numbers, where `X` is column 1~20, `Y` is row 1~2, `ShowCursor` is 1 to show or 0 to hide. *Example:* `1,2,1` will show blinking cursor at row 2 in the very beginning of the line.
     * `NowPlaying`: Transition to the Now Playing screen (same as after playing a new track).
 
 Other lines are ignored, so it's safe to combine on-screen subtitles and VFD subtitles in a single file.
