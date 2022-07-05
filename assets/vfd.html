@@ -17,7 +17,7 @@
             EFF.run(new DispEffectSlideInRight({top: "    -= " + current.title + " =-     ", topScrolls: true}, 10));
         }
         
-        function dispNext() {
+        function dispNext(forSubtitleAdvancement) {
             if(currentSubtitleLooper) {
                 currentSubtitleLooper.stopLooping();
                 currentSubtitleLooper = undefined;
@@ -31,14 +31,16 @@
             
             current = queue.shift();
             
-            EFF.run(new DispEffectWipeUp());
-            EFF.run(new DispEffectSlideInRight({top: "DJ /akasaka in", bottom:"       Anison Hijack"}, 50));
-            EFF.run(new DispEffectPause(2000));
-            EFF.run(new DispEffectWipeDown());
-            EFF.run(new DispEffectResetAndCursor({x: 1, y: 2, show: true}));
-            EFF.run(new DispEffectTyping("Now playing..."));
-            EFF.run(new DispEffectPause(1000));
-            dispNowp();
+            if(!forSubtitleAdvancement) {
+                EFF.run(new DispEffectWipeUp());
+                EFF.run(new DispEffectSlideInRight({top: "DJ /akasaka in", bottom:"       Anison Hijack"}, 50));
+                EFF.run(new DispEffectPause(2000));
+                EFF.run(new DispEffectWipeDown());
+                EFF.run(new DispEffectResetAndCursor({x: 1, y: 2, show: true}));
+                EFF.run(new DispEffectTyping("Now playing..."));
+                EFF.run(new DispEffectPause(1000));
+                dispNowp();
+            }
             
             startSubtitleIfNeeded();
         }
@@ -112,13 +114,15 @@
                     
                     if(current == meta) {
                         startSubtitleIfNeeded();
+                    } else if (!currentSubtitleLooper) {
+                        dispNext(true);
                     }
                 }
             };
             xhr.onerror = console.error;
             xhr.send();
             
-            if(!current) dispNext();
+            if(!current) dispNext(false);
         }
         
         // Called when bpm changes

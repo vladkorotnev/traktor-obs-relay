@@ -18,6 +18,7 @@
     </head>
     <body>
         <canvas id="screen"></canvas>
+        <script type="text/javascript" src="assparse.js"></script>
         <script type="text/javascript" src="api/api-ws.js"></script> 
         <script type="text/javascript" src="api/api.js"></script>
         <script type="text/javascript">
@@ -103,6 +104,8 @@
                 }
             }
 
+            const NonVFDLineFilter = (ev) => {return (ev._type == AssEventType.Comment && ev.style == "VFD") ? null : ev};
+
             // Called when new track plays
             function pushTrack(meta) {
                 // Enqueue deck's subtitles if any
@@ -111,6 +114,9 @@
                 xhr.onload = () => {
                     if (xhr.status == 200) {
                         meta.subtitleData = xhr.response;
+                        let parser = new AssParse(xhr.response, NonVFDLineFilter);
+                        parser.parse();
+                        if(parser.events.length == 0) return; // if VFD-only script, ignore it
                         queue.push(meta);
                         console.log("Push track into subtitle queue", meta);
                         // Start playing if not yet
