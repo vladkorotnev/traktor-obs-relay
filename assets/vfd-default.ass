@@ -9,7 +9,7 @@ YCbCr Matrix: None
 
 [Aegisub Project Garbage]
 Last Style Storage: Default
-Active Line: 7
+Active Line: 5
 
 [V4+ Styles]
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
@@ -18,11 +18,12 @@ Style: VFD,Fixedsys,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,1
 
 [Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
-Comment: 0,0:00:00.00,0:00:03.00,VFD,,0,0,0,WipeUp,
-Comment: 0,0:00:05.00,0:00:07.00,VFD,,0,0,0,WipeDown,
-Comment: 0,0:00:09.00,0:00:12.00,VFD,,0,0,0,JustShow,Just Show Line 1\NJust Show Line 2
-Dialogue: 0,0:00:13.00,0:00:15.00,Default,,0,0,0,,Some other subtitle not for VFD
-Comment: 0,0:00:15.00,0:00:18.00,VFD,,0,0,0,SlideRight,Slide in Line 1\NSlide in Line 2
-Comment: 0,0:00:22.00,0:00:22.01,VFD,,0,0,0,Reset,0,0,1
-Comment: 0,0:00:22.01,0:00:24.01,VFD,,0,0,0,Typing,Typing line directly
-Comment: 0,0:00:28.01,0:00:28.01,VFD,,0,0,0,FlipIn,Flipping like\NA flipper
+Comment: 0,0:00:00.00,0:00:00.00,Default,,0,0,0,REM,This is a sequence executed by the VFD Driver upon every new track being played
+Comment: 0,0:00:00.00,0:00:00.00,Default,,0,0,0,REM,(Except when there is another ASS file with VFD contents found linked to the track itself)
+Comment: 0,0:00:00.00,0:00:00.00,Default,,0,0,0,REM,Edit this file to alter the new track intro
+Comment: 0,0:00:00.03,0:00:00.38,VFD,,0,0,0,WipeUp,
+Comment: 0,0:00:00.38,0:00:01.38,VFD,,0,0,0,SlideIn,DJ /akasaka in\N      Anysong Hijack
+Comment: 0,0:00:03.38,0:00:03.73,VFD,,0,0,0,WipeDown,
+Comment: 0,0:00:03.73,0:00:03.74,VFD,,0,0,0,Reset,1,2,1
+Comment: 0,0:00:03.74,0:00:04.44,VFD,,0,0,0,Typing,Now playing...
+Comment: 0,0:00:05.44,0:00:06.44,VFD,,0,0,0,NowPlaying,

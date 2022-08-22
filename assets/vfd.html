@@ -10,8 +10,10 @@
         var queue = [];
         var current = undefined;
         var currentSubtitleLooper = undefined;
+        var defaultSubtitleLooper = undefined;
         
         function dispNowp() {
+            console.log("Display:", current);
             EFF.run(new DispEffectResetAndCursor({x: 1, y: 2, show: true}));
             EFF.run(new DispEffectWipeUp(50, " ", "by " + current.artist.substring(0,20)));
             EFF.run(new DispEffectSlideInRight({top: "    -= " + current.title + " =-     ", topScrolls: true}, 10));
@@ -31,15 +33,9 @@
             
             current = queue.shift();
             
-            if(!forSubtitleAdvancement) {
-                EFF.run(new DispEffectWipeUp());
-                EFF.run(new DispEffectSlideInRight({top: "DJ /akasaka in", bottom:"       Anison Hijack"}, 50));
-                EFF.run(new DispEffectPause(2000));
-                EFF.run(new DispEffectWipeDown());
-                EFF.run(new DispEffectResetAndCursor({x: 1, y: 2, show: true}));
-                EFF.run(new DispEffectTyping("Now playing..."));
-                EFF.run(new DispEffectPause(1000));
-                dispNowp();
+            if(!forSubtitleAdvancement && defaultSubtitleLooper) {
+                defaultSubtitleLooper.reset();
+                defaultSubtitleLooper.startLooping(0.0);
             }
             
             startSubtitleIfNeeded();
@@ -66,7 +62,9 @@
                 rslt = new DispEffectJustShow({bottom: text[1], top: text[0]});
             } else if(line.effect == "FlipIn") {
                 rslt = new DispEffectFlipIn({bottom: text[1], top: text[0]}, durationMs / 57);
-            } else if(line.effect == "Typing") {
+            } else if(line.effect == "SlideIn") {
+                rslt = new DispEffectSlideInRight({bottom: text[1], top: text[0]}, durationMs / 20);
+            }  else if(line.effect == "Typing") {
                 rslt = new DispEffectTyping(text[0], durationMs/text[0].length);
             } else if(line.effect == "Reset") {
                 let params = text[0].split(',').map(x => parseInt(x));
@@ -145,6 +143,20 @@
                 }
             }
         }
+
+        function setupDefaultLooper() {
+            let xhr = new XMLHttpRequest();
+            xhr.open("GET", "vfd-default.ass");
+            xhr.onload = () => {
+                if (xhr.status == 200) {
+                    let parser = new AssParse(xhr.response, VFDLineFilter);
+                    parser.parse();
+                    defaultSubtitleLooper = new AssLooper(parser.events, subtitleCallback, 1.0, 15, () => { defaultSubtitleLooper.stopLooping(); });
+                }
+            };
+            xhr.onerror = console.error;
+            xhr.send();
+        }
         
         function startPort() {
             DISPLAY.init();
@@ -153,7 +165,7 @@
         }
     </script>
 </head>
-<body>
+<body onload="setupDefaultLooper()">
     <p id="hint">Connect CD7220 compatible VFD pole display to a serial port and click:</p>
     <button onclick="startPort()" id="startBtn">Connect</button>
 </body>

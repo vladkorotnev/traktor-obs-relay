@@ -19,9 +19,11 @@ const AssEventType = {
 
 /// An ASS subtitle file parser
 class AssParse {
+    /// `filter` can be used to alter the events prior to them being added into `events`, or dropping them if `null` is returned.
     constructor(text, filter) {
         this.text = text;
         this.events = [];
+        this.filter = filter || ((x) => x);
 
         this.fieldFilters = {
             start: this.convertTime,
@@ -36,7 +38,7 @@ class AssParse {
             DialoguePrefix: "Dialogue: "
         };
 
-        this.parse(filter);
+        this.parse();
     }
 
     /// Convert an ASS time string (e.g. 0:12:34.56) into seconds value
@@ -46,12 +48,10 @@ class AssParse {
     }
 
     /// Parse the current `this.text` buffer and fill the parsed events into `this.events` array.
-    /// `filter` can be used to alter the events prior to them being added into `events`, or dropping them if `null` is returned.
-    parse(filter) {
+    parse() {
         this.events = [];
 
         let lines = this.text.split("\n");
-        let fltFn = filter || ((x) => x);
         
         // Current CSV format specifier
         var formatSpec = null;
@@ -107,7 +107,7 @@ class AssParse {
 
                 // If parsing succeeded
                 if(rslt) {
-                    let flt = fltFn(rslt);
+                    let flt = this.filter(rslt);
                     // If filter function didn't drop the object
                     if(flt) {
                         this.events.push(flt);
@@ -125,7 +125,8 @@ class AssLooper {
     /// * `executor` — function to be called with a subtitle event every time it's time to output one
     /// * `tempo` — rate at which to play the subtitle events (1.0 is realtime, also default)
     /// * `fps` — rate at which to execute the run loop, default 15. Setting this too low might miss events, setting too high might be overkill.
-    constructor(events, executor, tempo, fps) {
+    /// * `completion` — optional callback that will be called once all events have been emitted
+    constructor(events, executor, tempo, fps, completion) {
         this.events = events;
         this.callback = executor;
 
@@ -141,11 +142,21 @@ class AssLooper {
         this.elapsed = 0;
         this.running = false;
 
+        this.completion = completion;
+
         // Turns out when disabling background throttling in Chrome, it affects timers (setTimeout),
         // but not animation frames. Since my use-case for this is in a backgrounded Chrome tab,
         // it makes sense to use setTimeout instead. However it's possible to switch to requestAnimationFrame
         // if necessary by changing this flag.
         this.useAnimationFrame = false;
+    }
+
+    reset() {
+        this.running = false;
+        this.elapsed = 0;
+        this.stopLooping();
+        this.events
+            .forEach(x => x.passed = false);
     }
 
     /// Begin emitting subtitle events
@@ -207,6 +218,12 @@ class AssLooper {
                 x.passed = true;
                 this.callback(x);
             });
+
+            if(this.completion) {
+                if(this.events.filter(x => !x.passed).length == 0) {
+                    this.completion();
+                }
+            }
         }
     }
 
