@@ -1,4 +1,4 @@
-const WS_SERV = "ws://127.0.0.1:9090";
+const WS_SERV = "ws://"+window.location.hostname+":9090";
 window.hasWsPush = true; // marker for api.js
 
 var pushSocket = null;

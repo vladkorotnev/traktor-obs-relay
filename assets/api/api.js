@@ -1,4 +1,4 @@
-const API_ROOT = "http://127.0.0.1:8080/";
+const API_ROOT = "http://"+window.location.hostname+":8080/";
 const NOW_PLAYING_API = "nowPlaying";
 const ART_API = "artwork/";
 const SUB_API = "subtitles/";
