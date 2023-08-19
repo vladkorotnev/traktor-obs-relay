@@ -11,7 +11,7 @@
         var current = undefined;
         var currentSubtitleLooper = undefined;
         var defaultSubtitleLooper = undefined;
-        
+
         function dispNowp() {
             console.log("Display:", current);
             EFF.run(new DispEffectResetAndCursor({x: 1, y: 2, show: true}));
@@ -75,9 +75,11 @@
             } else if(line.effect == "NowPlaying") {
                 dispNowp();
                 rslt = null;
+            } else if(line.effect == "Bitmap" || line.effect == "Pamtib") {
+                let bmpValues = JSON.parse(line.text);
+                rslt = new DispEffectShowBitmap(bmpValues, line.effect == "Pamtib");
             }
-            
-            
+
             if(rslt) {
                 EFF.run(rslt);
             }

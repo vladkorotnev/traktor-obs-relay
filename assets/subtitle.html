@@ -22,7 +22,7 @@
         <script type="text/javascript" src="api/api-ws.js"></script> 
         <script type="text/javascript" src="api/api.js"></script>
         <script type="text/javascript">
-            var fps = 30;//<-- MUST BE SAME AS IN OBS!!!
+            var fps = 60;//<-- MUST BE SAME AS IN OBS!!!
 
             // ------------------------------------------------------------------------------
 
@@ -30,7 +30,7 @@
             var renderOpts = {
                 canvas: document.getElementById('screen'),
                 subUrl: '/data/dummy.ass', // octopus doesn't like null urls on init
-                fonts: ['/3rdparty/fonts/RocknRollOne-Regular.ttf'],
+                fonts: ['/3rdparty/fonts/RocknRollOne-Regular.ttf', '/3rdparty/fonts/msgothic.ttc'],
                 workerUrl: '/3rdparty/octopus/subtitles-octopus-worker.js',
                 legacyWorkerUrl: '/3rdparty/octopus/subtitles-octopus-worker-legacy.js',
                 lossyRender: true,

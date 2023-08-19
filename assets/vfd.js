@@ -3,7 +3,8 @@ if(!'serial' in navigator) { alert("Browser doesn't support serial port function
 /// Driver for the CD7220 based VFD pole customer display
 class CD7220 {
 	constructor() {
-		this.baud = 9600;
+		// change baud of hardware by sending \x02\x05\x42\x30\x03 for 9600, \x02\x05\x42\x36\x03 for 38400
+		this.baud = 38400;
 		this.encoder = new TextEncoder();
 		
 		this.SEQ = {
@@ -31,12 +32,14 @@ class CD7220 {
 			CLEAR_ALL: "\x0C",
 			CLEAR_LINE: "\x18",
 			
+			CUSTOM_CHAR_PRELUDE: "\x1B\x26\x01",
 			
 			CURSOR_SET: function(x, y) { return this.CURS_SET_PRELUDE+String.fromCharCode(x)+String.fromCharCode(y) },
 			STR_UPPER_SET: function(str) { return this.STRING_UPPER+str+this.STRING_END },
 			STR_LOWER_SET: function(str) { return this.STRING_LOWER+str+this.STRING_END },
 			STR_UPPER_SCROLL_SET: function(str) { return this.STRING_UPPER_SCRL+str+this.STRING_END },
-			CURSOR_VISIBLE: function(show) { return "\x1B\x5F" + (show ? "\x01" : "\x00"); }
+			CURSOR_VISIBLE: function(show) { return "\x1B\x5F" + (show ? "\x01" : "\x00"); },
+			CUSTOM_CHARS_ON: function(on) { return "\x1B\x25" + (on ? "\x01" : "\x00"); }
 		};
 	}
 	
@@ -59,15 +62,19 @@ class CD7220 {
 		return new Uint8Array(str.split('').map((char) => char.charCodeAt(0)));
 	}
 	
-	/// Send a raw string into the CD7220 port
-	sendRawStr(str) {
+	sendRawBytes(bytes) {
 		this.writer.ready
 			.then(() => {
-				return this.writer.write(this.encode(str));
+				return this.writer.write(bytes);
 			})
 			.catch((e) => {
 				console.error("Write error", e);
 			});
+	}
+
+	/// Send a raw string into the CD7220 port
+	sendRawStr(str) {
+		this.sendRawBytes(this.encode(str));
 	}
 	
 	/// Toggle showing the cursor
@@ -105,6 +112,22 @@ class CD7220 {
 	setCursor(x, y) {
 		if(x < 1 || x > 20 || y < 1 || y > 2) console.error("Invalid cursor coords", x, y);
 		this.sendRawStr(this.SEQ.CURSOR_SET(x, y));
+	}
+
+	/// Set whether custom charset is enabled
+	setCustomCharactersEnabled(enabled) {
+		this.sendRawStr(this.SEQ.CUSTOM_CHARS_ON(enabled));
+	}
+
+	/// Set custom charset data
+	/// `chars` is a dictionary of {<ASCII CODE>: [<up to 5 bytes>]}
+	/// where each byte is a 7-bit column, MSB-1 on top, LSB on bottom
+	uploadCharacters(chars) {
+		for(let code in chars) {
+			this.sendRawStr(this.SEQ.CUSTOM_CHAR_PRELUDE);
+			let charBytes = chars[code].splice(0,5);
+			this.sendRawBytes(new Uint8Array([code, code, charBytes.length, ...charBytes]));
+		}
 	}
 }
 
@@ -178,6 +201,46 @@ class DispEffectCursor extends DispEffect {
 		super(0, (disp, frame) => {
 			disp.setCursor(cursor.x, cursor.y);
 			disp.setShowCursor(cursor.show);
+		});
+	}
+}
+
+/// Effect to draw a bitmap
+class DispEffectShowBitmap extends DispEffect {
+	constructor(bmp, invert) {
+		super(0, (disp, frame) => {
+			// bmp: 100x16 vertical 1bpp
+			let offs = 0;
+			let chars = {};
+			let seenCharHashes = {};
+			let string = "";
+			for(let ccode = 0x80; ccode <= 0xA8; ccode++) {
+				let arry = [bmp[offs], bmp[offs+1], bmp[offs+2], bmp[offs+3], bmp[offs+4]];
+				if(invert) {
+					for(let i = 0; i < 5; i++) arry[i] = ~arry[i];
+				}
+				if(offs > 5 * 20) {
+					// second line needs to move 1px down, so total top 1px and bottom 1px is cropped
+					for(let i = 0; i < 5; i++) arry[i] <<= 1;
+				}
+				offs += 5;
+
+				let charHash = arry.map(x => x.toString(16)).join('.');
+				if(seenCharHashes[charHash]) {
+					console.log('Reuse char ',charHash);
+					string += String.fromCharCode(seenCharHashes[charHash]);
+				} else {
+					chars[ccode] = arry;
+					seenCharHashes[charHash] = ccode;
+					string += String.fromCharCode(ccode);
+				}
+			}
+			disp.setCustomCharactersEnabled(true);
+			disp.uploadCharacters(chars);
+			disp.overwrite();
+			disp.clear();
+			disp.sendRawStr(string);
+			disp.setCustomCharactersEnabled(false);
 		});
 	}
 }
