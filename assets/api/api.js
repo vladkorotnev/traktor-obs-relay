@@ -3,6 +3,7 @@ const NOW_PLAYING_API = "nowPlaying";
 const ART_API = "artwork/";
 const SUB_API = "subtitles/";
 const VID_API = "video/";
+const FILENAME_API = "filename/";
 const CHECK_INTERVAL = 2000;
 
 function query() {
@@ -38,6 +39,13 @@ function getSubtitleUrl(meta) {
 function getVideoUrl(meta) {
     if(meta.deck) {
         return API_ROOT+VID_API+meta.deck+"?nocache="+Date.now();
+    }
+    return "";
+}
+
+function getFilename(meta) {
+    if(meta.deck) {
+        return API_ROOT+FILENAME_API+meta.deck+"?nocache="+Date.now();
     }
     return "";
 }

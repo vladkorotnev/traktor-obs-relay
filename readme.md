@@ -58,6 +58,7 @@ Aside from the usual endpoints from Traktor-API-Client, the HTTP host also provi
 * `/artwork/<deck letter>`: get the artwork for the track playing in the specified deck. Currently only reading artwork from FLAC and MP3 files is supported.
 * `/subtitles/<deck letter>`: get the subtitle file for the track playing in the specified deck. It should reside in the same folder as the track, with the same name and the extension `ass` for Advanced Substation format. E.g. if you are playing a track from `D:\Music\The Beatles\Help.mp3`, the subtitles should be located in `D:\Music\The Beatles\Help.ass`.
 * `/video/<deck letter>`: get the video file for the track playing in the specified deck. It should reside in the same folder as the track, with the same name and the extension `mp4` or `webm`. E.g. if you are playing a track from `D:\Music\The Beatles\Help.mp3`, the video should be located in `D:\Music\The Beatles\Help.webm`.
+* `/filename/<deck letter>`: get the song filename without extension for the track playing in the specified deck. Used with `auto-vj-uri.html`.
 
 ## About the bundled widgets
 
@@ -98,6 +99,10 @@ Place this as a fullscreen overlay over your stream. It will play subtitle files
 ### `auto-vj.html`
 
 Plays video files stored by the same name as the played audio files automatically. Not guaranteed to be 100% in sync for obvious reasons. Supports `webm` and `mp4` with opacity.
+
+### `auto-vj-uri.html`
+
+Plays video files by the same name as the played audio files automatically pointed to a specific URI without needing to download the whole file so it loads really fast, useful when the relay is hosted into another computer and files need to be accessed locally or from any other host. Web server must support ranges by default, nginx is recommended. Supports `webm` and `mp4` with opacity. To configure the URI edit `/assets/auto-vj-uri.html` and set the `LOCAL_URI` constant.
 
 ### `logger.html`
 

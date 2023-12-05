@@ -1,0 +1,141 @@
+<html>
+    <head>
+        <title>AutoVJ</title>
+        <script type="text/javascript" src="api/api-ws.js"></script> 
+        <script type="text/javascript" src="api/api.js"></script>
+        <script type="text/javascript">
+
+            /* Place the URI to where to obtain videos.
+               Do not use rouille /assets folder as it doesn't supports ranges which is required for setting the video current time (syncing/seek).
+               
+               A default nginx server with the following configuration changes is enough:
+
+               server {
+               listen       8081;
+               ...
+               location / {
+                  add_header 'Access-Control-Allow-Origin' '*' always;
+               }
+               ...
+
+               CORS header is a must so you can load videos from another hostname and/or port.
+               This example requires videos to be at "<nginx root>/html/videos/".
+            */
+            const LOCAL_URI = "http://localhost:8081/videos/"
+
+            var players = {};
+
+            function tryCreatePlayer(meta) {
+                var vLayer = document.createElement('video');
+                vLayer.muted = true;
+                vLayer.autoplay = false;
+                vLayer.defaultPlaybackRate = meta.tempo;
+                vLayer.playbackRate = meta.tempo;
+                vLayer.addEventListener('loadeddata', () => {
+                    if(vLayer.readyState == HTMLMediaElement.HAVE_ENOUGH_DATA && players[meta.filePath] && !vLayer.didStart) { // can play 100% and not removed yet
+                        document.getElementById('container').appendChild(vLayer);
+                        vLayer.play();
+                        vLayer.didStart = true;
+                    }
+                });
+                vLayer.addEventListener('ended',() => {
+                    vLayer.style.display = "none";
+                },false);
+                
+                var uReader = new XMLHttpRequest();
+                uReader.open('GET', getFilename(meta));
+                uReader.responseType = 'text'
+                uReader.onload = () => {
+                    videofilename = LOCAL_FOLDER + uReader.responseText;
+                    const extensions = [".webm", ".mp4"];
+                    for (i = 0; i < extensions.length; i++) {
+                        videopath = videofilename + extensions[i];
+                        console.log("Searching for video file: " + videopath);
+                        if(doesFileExist(videopath)){
+                            vLayer.src = videopath;
+                            break;
+                        }       
+                    }
+                };                                                                                                                                                                                                                                                                                                                                                                                                                                           
+                uReader.send();
+                return vLayer;
+            }
+
+            // Check if URI file exist
+            function doesFileExist(urlToFile)
+            {
+                var xhr = new XMLHttpRequest();
+                xhr.open('HEAD', urlToFile, false);
+                xhr.send();
+                if (xhr.readyState == 4 && xhr.status == 404 ) {
+                    console.log("File doesn't exist: " + urlToFile);
+                    return false;
+                } else {
+                    console.log("File found: " + urlToFile);
+                    return true;
+                }
+            }
+
+            // Called when track ends playing
+            function popTrack(meta) {
+                if(players[meta.filePath]) {
+                    players[meta.filePath].remove();
+                    delete players[meta.filePath];
+                }
+            }
+
+            // Called when new track plays
+            function pushTrack(meta) {
+                if(players[meta.filePath]) return; // do not create player twice if something goes weird
+                
+                players[meta.filePath] = tryCreatePlayer(meta);
+            }
+
+            // Called periodically when a track is progressing
+            function trackTick(meta) {
+                var player = players[meta.filePath];
+                if(!player || player.readyState != HTMLMediaElement.HAVE_ENOUGH_DATA) return;
+
+                
+                if(player.didStart && 
+                    meta.elapsedTime && 
+                    Math.abs(meta.elapsedTime - player.currentTime) > 0.3 &&
+                    meta.elapsedTime < player.duration && meta.elapsedTime > 0) {
+
+                    console.log("Drift", meta.elapsedTime, player.currentTime, player.duration);
+                    player.currentTime = meta.elapsedTime.toString();
+                }
+                if(meta.tempo) {
+                    player.playbackRate = meta.tempo;
+                    player.defaultPlaybackRate = meta.tempo;
+                }
+            }
+
+        </script>
+        <style type="text/css">
+        body, html {
+            background: rgba(0, 0, 0, 0);
+            padding: 0;
+            margin: 0 !important;
+        }
+
+        #container {
+            width: 100%;
+            height: 100%;
+        }
+
+        #container > video {
+            position: absolute;
+            left: 0; top: 0;
+            width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0);
+            padding: 0;
+            margin: 0;
+        }
+        </style>
+    </head>
+    <body>
+        <div id="container">
+        </div>
+    </body>
+</html>
