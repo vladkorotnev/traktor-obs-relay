@@ -138,4 +138,4 @@ Other lines are ignored, so it's safe to combine on-screen subtitles and VFD sub
 
 -----
 
-by akasaka, 2021~2022
+by akasaka, 2021~2023

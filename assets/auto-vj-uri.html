@@ -46,7 +46,7 @@
                 uReader.open('GET', getFilename(meta));
                 uReader.responseType = 'text'
                 uReader.onload = () => {
-                    videofilename = LOCAL_FOLDER + uReader.responseText;
+                    videofilename = LOCAL_URI + uReader.responseText;
                     const extensions = [".webm", ".mp4"];
                     for (i = 0; i < extensions.length; i++) {
                         videopath = videofilename + extensions[i];
