@@ -135,3 +135,17 @@ pub fn get_deck_assoc_file(deck_id: &Deck, decks: &HashMap<Deck, DeckStatus>, ex
         None
     }
 }
+
+pub fn get_deck_assoc_filename(deck_id: &Deck, decks: &HashMap<Deck, DeckStatus>) -> Option<String> {
+    if let Some(deck) = decks.get(deck_id) {
+        let fpath = &deck.file_path;
+        trace!("Get associated filename of deck {}: {}", deck_id, fpath);
+        let file_path = Path::new(&fpath);
+        let subtitle_filename = file_path.file_stem();
+        debug!("Returning filename {}", subtitle_filename.unwrap().to_os_string().into_string().unwrap());
+        return Some(subtitle_filename.unwrap().to_os_string().into_string().unwrap());
+    } else {
+        error!("Could not get deck {}", deck_id);
+        None
+    }
+}

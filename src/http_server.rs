@@ -233,6 +233,19 @@ fn start_http() {
                     Response::empty_404().with_no_cache()
                 },
 
+                (GET) (/filename/{deck_id: Deck}) => {
+                    trace!("Get song filename without extension");
+                    let decks = DECK_STATUS.read().expect("RwLock failed");
+                    match super::logic::get_deck_assoc_filename(&deck_id, &decks) {
+                        None => {
+                            Response::empty_404().with_no_cache()
+                        },
+                        Some(text) => {
+                            return Response::text(text).with_no_cache()
+                        }
+                    }
+                },
+
                 _ => {
                     rouille::match_assets(&request, &root).with_no_cache()
                 }
