@@ -114,11 +114,11 @@
             function popDeck(meta) {
                 console.log("[DEBUG]: popDeck "+ meta.deck);
                 var player = players[meta.deck];
-                if(player)
+                if(player !== undefined)
                 {
+                    console.log("[DEBUG]: popDeck - Fade out for deck "+ meta.deck); 
                     player.className = "hidden";
-                    if(player.playing) {  
-                        console.log("[DEBUG]: popDeck - Fade out for deck "+ meta.deck);                    
+                    if(player.playing) {                 
                         player.pause();
                     }
                     else console.log("[DEBUG]: popDeck - Player not playing, skipping pause for deck "+ meta.deck);
@@ -148,7 +148,7 @@
 
             // Called periodically when any deck is progressing
             function trackTick(meta) {
-                console.log("[DEBUG] trackTick: " + meta.deck)
+                //console.log("[DEBUG] trackTick: " + meta.deck)
                 var player = players[meta.deck];
                 if(!player || player.readyState != HTMLMediaElement.HAVE_ENOUGH_DATA) return;
 
@@ -178,16 +178,15 @@
 
             // Called periodically when any deck is not playing
             function trackPaused(meta) {
-                console.log("[DEBUG] trackPaused: " + meta.deck)
+                //console.log("[DEBUG] trackPaused: " + meta.deck)
                 var player = players[meta.deck];
-                if(player)
+                if(player !== undefined)
                 {
+                    console.log("[DEBUG]: trackPaused - Fade out for deck  "+ meta.deck);  
                     player.className = "hidden";
                     if(player.playing)
-                    {
-                        console.log("[DEBUG]: trackPaused - Fade out for deck  "+ meta.deck);                    
-                            setTimeout(function() {
-                                player.pause();}, 400);
+                    {                                          
+                        player.pause();
                     }
                 } 
             }
