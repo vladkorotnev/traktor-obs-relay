@@ -5,20 +5,7 @@
         <script type="text/javascript" src="api/api.js"></script>
 
         <style type="text/css">
-            .visible {
-                visibility: visible;
-                opacity: 1;
-                transition: opacity 1s linear;
-            }
-            .hidden {
-                visibility: hidden;
-                opacity: 0;
-                transition: visibility 0s 1s, opacity 1s linear;
-            }
-            .video {
-                visibility: hidden;
-                opacity: 0;
-            }
+            
         </style>
 
         <script type="text/javascript">
@@ -157,6 +144,7 @@
                     console.log("[DEBUG] Player is not playing, set currentTime and play!")
                     player.currentTime = meta.elapsedTime.toString();
                     player.play();
+                    bringToTop(player);                    
                     // Wait a little if the video element is lagging, 200ms seems to be enough for slow computers
                     setTimeout(function() {
                         player.className = "visible";}, 200);
@@ -191,6 +179,17 @@
                 } 
             }
 
+            // Used when a video player starts playing to always bring it to the top of others
+            function bringToTop(player) {
+                var playersList = document.querySelectorAll("video");
+                player.style.zIndex = 110;
+                playersList.forEach(element => {
+                    if(element === player) 
+                        return;
+                    element.style.zIndex = 100;
+                });                                
+            }
+
         </script>
         <style type="text/css">
         body, html {
@@ -211,6 +210,21 @@
             background: rgba(0, 0, 0, 0);
             padding: 0;
             margin: 0;
+            z-index: 100;
+        }
+        .visible {
+            visibility: visible;
+            opacity: 1;
+            transition: opacity 1s linear;
+        }
+        .hidden {
+            visibility: hidden;
+            opacity: 0;
+            transition: visibility 0s 1s, opacity 1s linear;
+        }
+        .video {
+            visibility: hidden;
+            opacity: 0;
         }
         </style>
     </head>
