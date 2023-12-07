@@ -51,18 +51,28 @@ function getFilename(meta) {
 }
 
 var tracks = {};
+var decks = {};
 var oldBpm = 0;
 function processUpdates(info) {
     if(!info) return;
     if(info.songsOnAir) {
         let newTracks = Object.fromEntries( info.songsOnAir.map(x => [x.filePath, x]) );
+        let newDecks = Object.fromEntries( info.songsOnAir.map(x => [x.deck, x]) );
 
         let newPaths = Object.keys(newTracks);
         let oldPaths = Object.keys(tracks);
 
+        let newDecksId = Object.keys(newDecks);
+        let oldDecksId = Object.keys(decks);
+
         if(typeof popTrack == "function") {
             let goneTracks = oldPaths.filter(path => newPaths.indexOf(path) == -1).map(x => tracks[x]);
             goneTracks.forEach(element => popTrack(element));
+        }
+
+        if(typeof popDeck == "function") {
+            let goneDecks = oldDecksId.filter(deck => newDecksId.indexOf(deck) == -1).map(x => decks[x]);
+            goneDecks.forEach(element => popDeck(element));
         }
 
         if(typeof pushTrack == "function") {
@@ -77,7 +87,13 @@ function processUpdates(info) {
             }
         }
 
+        if(typeof trackPaused == "function") {
+            let pausedTracks = info.songsOnAir.filter(x => x.isPlaying == false);
+            pausedTracks.forEach(element => trackPaused(element));
+        }
+
         tracks = newTracks;
+        decks = newDecks;
     }
 
     if(info.bpm && info.bpm != oldBpm) {

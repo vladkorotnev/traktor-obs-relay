@@ -142,8 +142,14 @@ pub fn get_deck_assoc_filename(deck_id: &Deck, decks: &HashMap<Deck, DeckStatus>
         trace!("Get associated filename of deck {}: {}", deck_id, fpath);
         let file_path = Path::new(&fpath);
         let subtitle_filename = file_path.file_stem();
-        debug!("Returning filename {}", subtitle_filename.unwrap().to_os_string().into_string().unwrap());
-        return Some(subtitle_filename.unwrap().to_os_string().into_string().unwrap());
+        if subtitle_filename.is_some() {
+            debug!("Returning filename {}", subtitle_filename.unwrap().to_os_string().into_string().unwrap());
+            return Some(subtitle_filename.unwrap().to_os_string().into_string().unwrap());
+        }
+        else {
+            debug!("Filename not found, returning None");
+            None
+        }
     } else {
         error!("Could not get deck {}", deck_id);
         None

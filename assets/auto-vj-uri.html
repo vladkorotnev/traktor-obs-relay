@@ -3,7 +3,15 @@
         <title>AutoVJ</title>
         <script type="text/javascript" src="api/api-ws.js"></script> 
         <script type="text/javascript" src="api/api.js"></script>
+        <script type="text/javascript" src="3rdparty/js/jquery-3.7.1.min.js"></script>
         <script type="text/javascript">
+
+            // Better way to handle if a video is playing
+            Object.defineProperty(HTMLMediaElement.prototype, 'playing', {
+                get: function(){
+                    return !!(this.currentTime > 0 && !this.paused && !this.ended && this.readyState > 2);
+                }
+            })
 
             /* Place the URI to where to obtain videos.
                Do not use rouille /assets folder as it doesn't supports ranges which is required for setting the video current time (syncing/seek).
@@ -27,38 +35,45 @@
 
             function tryCreatePlayer(meta) {
                 var vLayer = document.createElement('video');
+                vLayer.setAttribute("id", meta.deck);
                 vLayer.muted = true;
                 vLayer.autoplay = false;
                 vLayer.defaultPlaybackRate = meta.tempo;
                 vLayer.playbackRate = meta.tempo;
-                vLayer.addEventListener('loadeddata', () => {
-                    if(vLayer.readyState == HTMLMediaElement.HAVE_ENOUGH_DATA && players[meta.filePath] && !vLayer.didStart) { // can play 100% and not removed yet
-                        document.getElementById('container').appendChild(vLayer);
-                        vLayer.play();
-                        vLayer.didStart = true;
-                    }
-                });
                 vLayer.addEventListener('ended',() => {
-                    vLayer.style.display = "none";
+                    // Hide video player if it reaches the end to avoid black screen
+                    $(vLayer).fadeOut('fast');
                 },false);
-                
+                // Create hidden
+                document.getElementById('container').appendChild(vLayer);
+                loadTrackVideo(meta);
+                return vLayer;
+            }
+
+            function loadTrackVideo(meta) {
                 var uReader = new XMLHttpRequest();
                 uReader.open('GET', getFilename(meta));
                 uReader.responseType = 'text'
                 uReader.onload = () => {
+                    if(!uReader.responseText)
+                        return console.log("[DEBUG] Deck without song loaded, skipping.");
                     videofilename = LOCAL_URI + uReader.responseText;
                     const extensions = [".webm", ".mp4"];
                     for (i = 0; i < extensions.length; i++) {
                         videopath = videofilename + extensions[i];
                         console.log("Searching for video file: " + videopath);
+                        if(players[meta.deck].getAttribute("src") === videopath){
+                            console.log("[DEBUG] Same video file is already loaded, no need to reload, skipping.");
+                            break;
+                        }
                         if(doesFileExist(videopath)){
-                            vLayer.src = videopath;
+                            players[meta.deck].setAttribute("src", videopath);
+                            players[meta.deck].load();
                             break;
                         }       
                     }
                 };                                                                                                                                                                                                                                                                                                                                                                                                                                           
                 uReader.send();
-                return vLayer;
             }
 
             // Check if URI file exist
@@ -76,28 +91,55 @@
                 }
             }
 
-            // Called when track ends playing
-            function popTrack(meta) {
-                if(players[meta.filePath]) {
-                    players[meta.filePath].remove();
-                    delete players[meta.filePath];
+            // Called when deck is gone
+            function popDeck(meta) {
+                console.log("[DEBUG]: popDeck "+ meta.deck);
+                var player = players[meta.deck];
+                $(player).fadeTo("fast", 0);
+                if(player.playing) {  
+                    console.log("[DEBUG]: popDeck - Fade out for deck  "+ meta.deck);                    
+                    player.pause();
                 }
+                else console.log("[DEBUG]: popDeck - Player not playing, skipping pause for deck "+ meta.deck);
             }
 
             // Called when new track plays
             function pushTrack(meta) {
-                if(players[meta.filePath]) return; // do not create player twice if something goes weird
-                
-                players[meta.filePath] = tryCreatePlayer(meta);
+
+                var player = players[meta.deck];
+                console.log("[DEBUG] pushTrack: " + meta.deck)
+                // Check if player for deck exist
+                if(player !== undefined)
+                {
+                    // If player exist, update video source
+                    console.log("[DEBUG] Player for deck exist!")
+                    loadTrackVideo(meta);
+                }
+                else
+                {
+                    console.log("[DEBUG] Player for deck DOES NOT exist")
+                    // Ohterwise load video in existing player
+                    players[meta.deck] = tryCreatePlayer(meta);
+                }
             }
 
-            // Called periodically when a track is progressing
+            // Called periodically when any deck is progressing
             function trackTick(meta) {
-                var player = players[meta.filePath];
+                console.log("[DEBUG] trackTick: " + meta.deck)
+                var player = players[meta.deck];
                 if(!player || player.readyState != HTMLMediaElement.HAVE_ENOUGH_DATA) return;
 
-                
-                if(player.didStart && 
+                if(!player.playing)
+                {
+                    console.log("[DEBUG] Player is not playing, set currentTime and play!")
+                    player.currentTime = meta.elapsedTime.toString();
+                    player.play();
+                    // Wait a little if the video element is lagging, 200ms seems to be enough for slow computers
+                    setTimeout(function() {
+                        $(player).fadeTo("fast", 1);}, 200);
+                }
+
+                if(player.playing && 
                     meta.elapsedTime && 
                     Math.abs(meta.elapsedTime - player.currentTime) > 0.3 &&
                     meta.elapsedTime < player.duration && meta.elapsedTime > 0) {
@@ -108,6 +150,19 @@
                 if(meta.tempo) {
                     player.playbackRate = meta.tempo;
                     player.defaultPlaybackRate = meta.tempo;
+                }   
+            }
+
+            // Called periodically when any deck is paused
+            function trackPaused(meta) {
+                console.log("[DEBUG] trackPaused: " + meta.deck)
+                var player = players[meta.deck];
+                $(player).fadeTo("fast", 0);
+                if(player.playing)
+                {
+                    console.log("[DEBUG]: trackPaused - Fade out for deck  "+ meta.deck);                    
+                        setTimeout(function() {
+                            player.pause();}, 400);
                 }
             }
 
