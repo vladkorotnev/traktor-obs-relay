@@ -152,7 +152,7 @@
                 var player = players[meta.deck];
                 if(!player || player.readyState != HTMLMediaElement.HAVE_ENOUGH_DATA) return;
 
-                if(!player.playing)
+                if(!player.playing && meta.isPlaying)
                 {
                     console.log("[DEBUG] Player is not playing, set currentTime and play!")
                     player.currentTime = meta.elapsedTime.toString();
