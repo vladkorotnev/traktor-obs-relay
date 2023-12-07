@@ -1,9 +1,26 @@
 <html>
     <head>
-        <title>AutoVJ</title>
+        <title>AutoVJ URI</title>
         <script type="text/javascript" src="api/api-ws.js"></script> 
         <script type="text/javascript" src="api/api.js"></script>
-        <script type="text/javascript" src="3rdparty/js/jquery-3.7.1.min.js"></script>
+
+        <style type="text/css">
+            .visible {
+                visibility: visible;
+                opacity: 1;
+                transition: opacity 1s linear;
+            }
+            .hidden {
+                visibility: hidden;
+                opacity: 0;
+                transition: visibility 0s 1s, opacity 1s linear;
+            }
+            .video {
+                visibility: hidden;
+                opacity: 0;
+            }
+        </style>
+
         <script type="text/javascript">
 
             // Better way to handle if a video is playing
@@ -42,9 +59,11 @@
                 vLayer.playbackRate = meta.tempo;
                 vLayer.addEventListener('ended',() => {
                     // Hide video player if it reaches the end to avoid black screen
-                    $(vLayer).fadeOut('fast');
+                    vLayer.className = "hidden";
+                    
                 },false);
                 // Create hidden
+                vLayer.className = "hidden";
                 document.getElementById('container').appendChild(vLayer);
                 loadTrackVideo(meta);
                 return vLayer;
@@ -95,12 +114,16 @@
             function popDeck(meta) {
                 console.log("[DEBUG]: popDeck "+ meta.deck);
                 var player = players[meta.deck];
-                $(player).fadeTo("fast", 0);
-                if(player.playing) {  
-                    console.log("[DEBUG]: popDeck - Fade out for deck  "+ meta.deck);                    
-                    player.pause();
+                if(player)
+                {
+                    player.className = "hidden";
+                    if(player.playing) {  
+                        console.log("[DEBUG]: popDeck - Fade out for deck "+ meta.deck);                    
+                        player.pause();
+                    }
+                    else console.log("[DEBUG]: popDeck - Player not playing, skipping pause for deck "+ meta.deck);
                 }
-                else console.log("[DEBUG]: popDeck - Player not playing, skipping pause for deck "+ meta.deck);
+                else console.log("[DEBUG]: popDeck - Player doesn't exist, skipping for deck "+ meta.deck);
             }
 
             // Called when new track plays
@@ -136,7 +159,7 @@
                     player.play();
                     // Wait a little if the video element is lagging, 200ms seems to be enough for slow computers
                     setTimeout(function() {
-                        $(player).fadeTo("fast", 1);}, 200);
+                        player.className = "visible";}, 200);
                 }
 
                 if(player.playing && 
@@ -153,17 +176,20 @@
                 }   
             }
 
-            // Called periodically when any deck is paused
+            // Called periodically when any deck is not playing
             function trackPaused(meta) {
                 console.log("[DEBUG] trackPaused: " + meta.deck)
                 var player = players[meta.deck];
-                $(player).fadeTo("fast", 0);
-                if(player.playing)
+                if(player)
                 {
-                    console.log("[DEBUG]: trackPaused - Fade out for deck  "+ meta.deck);                    
-                        setTimeout(function() {
-                            player.pause();}, 400);
-                }
+                    player.className = "hidden";
+                    if(player.playing)
+                    {
+                        console.log("[DEBUG]: trackPaused - Fade out for deck  "+ meta.deck);                    
+                            setTimeout(function() {
+                                player.pause();}, 400);
+                    }
+                } 
             }
 
         </script>

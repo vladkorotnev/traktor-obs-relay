@@ -20,10 +20,11 @@ There is a simple JavaScript client layer implemented under `assets/api` which w
 
 * `pushTrack(meta)`: when a new track is introduced into the mix
 * `popTrack(meta)`: when a track is removed from the mix
+* `pushDeck(meta)`: when a new deck is exposed by the API
 * `popDeck(meta)`: when a deck is no longer exposed by the API
 * `onBpmChanged(bpm)`: when the master clock BPM is changed
 * `trackTick(meta)`: when a track receives a minor update (elapsed time or BPM change)
-* `trackPaused(meta)`: when a track is paused in the active mix
+* `trackPaused(meta)`: when a track is not playing in the active mix
 
 
 ## How to build

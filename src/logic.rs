@@ -32,7 +32,6 @@ pub fn get_songs_on_air(
         .map(|deck| cur_decks.get(deck))
         .filter(|opt| opt.is_some())
         .map(|opt| opt.unwrap().clone())
-        .filter(|stat| stat.is_playing)
         .collect();
 
     songs_on_air

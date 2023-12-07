@@ -56,7 +56,7 @@ var oldBpm = 0;
 function processUpdates(info) {
     if(!info) return;
     if(info.songsOnAir) {
-        let newTracks = Object.fromEntries( info.songsOnAir.map(x => [x.filePath, x]) );
+        let newTracks = Object.fromEntries( info.songsOnAir.filter(x => x.isPlaying == true).map(x => [x.filePath, x]) );
         let newDecks = Object.fromEntries( info.songsOnAir.map(x => [x.deck, x]) );
 
         let newPaths = Object.keys(newTracks);
@@ -78,6 +78,11 @@ function processUpdates(info) {
         if(typeof pushTrack == "function") {
             let addedTracks = newPaths.filter(path => oldPaths.indexOf(path) == -1).map(x => newTracks[x]);
             addedTracks.forEach(element => pushTrack(element));
+        }
+
+        if(typeof pushDeck == "function") {
+            let addedDecks = newPaths.filter(deck => oldDecksId.indexOf(deck) == -1).map(x => newDecks[x]);
+            addedDecks.forEach(element => pushDeck(element));
         }
 
         if(typeof trackTick == "function" && info.tickedDeck) {
