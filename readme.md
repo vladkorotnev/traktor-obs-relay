@@ -20,8 +20,12 @@ There is a simple JavaScript client layer implemented under `assets/api` which w
 
 * `pushTrack(meta)`: when a new track is introduced into the mix
 * `popTrack(meta)`: when a track is removed from the mix
+* `pushDeck(meta)`: when a new deck is exposed by the API
+* `popDeck(meta)`: when a deck is no longer exposed by the API
 * `onBpmChanged(bpm)`: when the master clock BPM is changed
 * `trackTick(meta)`: when a track receives a minor update (elapsed time or BPM change)
+* `trackPaused(meta)`: when a track is not playing in the active mix
+
 
 ## How to build
 
@@ -102,7 +106,7 @@ Plays video files stored by the same name as the played audio files automaticall
 
 ### `auto-vj-uri.html`
 
-Plays video files by the same name as the played audio files automatically pointed to a specific URI without needing to download the whole file so it loads really fast, useful when the relay is hosted into another computer and files need to be accessed locally or from any other host. Web server must support ranges by default, nginx is recommended. Supports `webm` and `mp4` with opacity. To configure the URI edit `/assets/auto-vj-uri.html` and set the `LOCAL_URI` constant.
+Plays video files by the same name as the played audio files automatically pointed to a specific URI without needing to download the whole file so it loads really fast, useful when the relay is hosted into another computer and files need to be accessed locally or from any other host. Web server must support ranges by default, nginx is recommended. Supports `webm` and `mp4` with opacity. This version of `auto-vj` uses more RAM but it's way smoother and prevents browser lag and freezing. To configure the URI edit `/assets/auto-vj-uri.html` and set the `LOCAL_URI` constant. 
 
 ### `logger.html`
 
