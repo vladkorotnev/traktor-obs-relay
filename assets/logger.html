@@ -1,6 +1,11 @@
 <html>
     <head>
         <title>Tracklist Logger</title>
+        <style type="text/css">
+            .lineitem, summary {
+                cursor: pointer;
+            }
+        </style>
         <script type="text/javascript" src="api/api-ws.js"></script> 
         <script type="text/javascript" src="api/api.js"></script>
         <script type="text/javascript">
@@ -98,7 +103,7 @@
 
                 rslt = rslt.replaceAll("%timecode%", formatTs(preferredTs + offsetSeconds*1000));
                 for(var elm in meta) {
-                    rslt = rslt.replaceAll("%"+elm+"%", meta[elm].toString());
+                    rslt = rslt.replaceAll("%"+elm+"%", (meta[elm] || "(unknown "+elm+")").toString());
                 }
                 return rslt;
             }
@@ -129,6 +134,22 @@
                 modeSolo.checked = (typeof window.localStorage.modeSolo == "undefined") ? true : (window.localStorage.modeSolo == "true");
                 offset.value = window.localStorage.offset || 0;
                 lineFmt.value = window.localStorage.lineFmt || "%timecode%     %artist% — %title%";
+                lineFmt.selectionStart = 0;
+                lineFmt.selectionEnd = 0;
+
+                document.querySelectorAll('.lineitem').forEach(item => {
+                    item.addEventListener('click', (ev) => {                    
+                        let caretPos = lineFmt.selectionStart;
+                        let textAreaTxt = lineFmt.value;
+                        let txtToAdd = item.innerText;
+                        lineFmt.value = textAreaTxt.substring(0, caretPos) + txtToAdd + textAreaTxt.substring(caretPos)
+                        lineFmt.focus();
+                        lineFmt.selectionStart = caretPos + txtToAdd.length;
+                        lineFmt.selectionEnd = caretPos + txtToAdd.length;
+                        
+                        settingsChanged();
+                    });
+                });
             }
 
             function settingsChanged() {
@@ -142,20 +163,36 @@
     <body>
         <h2>Tracklist Logger</h2>
         <hr/>
-        <h4>Settings</h4>
-        <span>Don't log tracks played for less than: <input id="minTime" type="number" value="1" onchange="settingsChanged();"/> seconds</span>
-        <br/>
-        <span>Prefer timecode of when 
-            <input id="modeAdded" name="mode" type="radio" onchange="settingsChanged();"/> track was added to the mix
-            <input id="modeSolo" name="mode" type="radio" checked="checked" onchange="settingsChanged();"/> track became solo
-        </span>
-        <br/>
-        <span>Start offset: <input id="offset" type="number" onchange="settingsChanged();"/> seconds</span>
-        <br/>
-        <span>Line format: <input id="lineFmt" type="text" value="%timecode%     %artist% — %title%" onchange="settingsChanged();"/></span>
-        <hr/>
+        <details>
+            <summary>Settings</summary>
+            <div style="margin: 16px; line-height: 30px;">
+                <span>Don't log tracks played for less than: <input id="minTime" type="number" value="1" onchange="settingsChanged();"/> seconds</span>
+                <br/>
+                <span>Prefer timecode of when 
+                    <input id="modeAdded" name="mode" type="radio" onchange="settingsChanged();"/> track was added to the mix
+                    <input id="modeSolo" name="mode" type="radio" checked="checked" onchange="settingsChanged();"/> track became solo
+                </span>
+                <br/>
+                <span>Start offset: <input id="offset" type="number" onchange="settingsChanged();"/> seconds</span>
+                <br/>
+                <span>Line format: <input id="lineFmt" type="text" style="width: 400px;" value="%timecode%     %artist% — %title%" onchange="settingsChanged();"/></span>
+                <details>
+                    <summary>Format items</summary>
+                    <ul>
+                        <li><tt class="lineitem">%timecode%</tt>: track start/solo timecode</li>
+                        <li><tt class="lineitem">%artist%</tt>: artist name</li>
+                        <li><tt class="lineitem">%remixer%</tt>: remix artist name</li>
+                        <li><tt class="lineitem">%album%</tt>: album name</li>
+                        <li><tt class="lineitem">%title%</tt>: track name</li>
+                        <li><tt class="lineitem">%genre%</tt>: track genre</li>
+                        <li><tt class="lineitem">%deck%</tt>: deck the track is playing on (A/B/C/D)</li>
+                        <li><tt class="lineitem">%comment%</tt>, <tt class="lineitem">%comment2%</tt>: comment in Traktor library</li>
+                    </ul>
+                </details>
+            </div>
+        </details>
         <h4>Log</h4>
         <p><strong>Current track: </strong> <em><span id="nowSong">------</span></em> started at <span id="nowStart">--:--:--</span>, went solo at <span id="nowSolo">--:--:--</span></p>
-        <textarea style="width:100%" readonly="readonly" id="logView"></textarea>
+        <textarea style="width:100%; height: 70%" readonly="readonly" id="logView"></textarea>
     </body>
 </html>
