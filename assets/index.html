@@ -6,7 +6,7 @@
     <script type="text/javascript">
       // Called when new track plays
       function pushTrack(meta) {
-        document.getElementById('now-playing').innerText = meta.artist + " - " + meta.title;
+        document.getElementById('now-playing').innerText = (meta.artist || "unknown artist") + " - " + (meta.title || "unknown title");
       }
       
       // Called when bpm changes
@@ -17,7 +17,7 @@
   </head>
   <body>
     <h1>Traktor Widget Server</h1>
-    <h2>Looks like it works?</h2>
+    <h2>Looks like it works? Play something and check the line below:</h2>
     <p>Now playing: <span id="now-playing">-----</span>, BPM: <span id="bpm">???</span></p>
     <hr><br>
     <h3>List of links to widgets:</h3>
@@ -70,6 +70,10 @@
       <li>
         <a href="vfd.html" target="_blank">VFD Driver</a>
         <p class="hint">Use a <a href="https://www.partnertechcorp.com/products/pos-peripherals/customer-display/cd-7220/" target="_blank">CD7220 series</a> compatible POS Customer Display to show subtitles and/or track titles!</p>
+      </li>
+      <li>
+        <a href="vfd.html" target="_blank">NJE Driver</a>
+        <p class="hint">Use an <a href="https://wiki.onakasuita.org/pukiwiki/?NJE-105" target="_blank">NJE series</a> compatible VFD pager display to show track titles!</p>
       </li>
     </ul>
     <h3>How do I customize all this?</h3>

@@ -1,0 +1,138 @@
+<html>
+    <head>
+        <title>NJE Driver</title>
+        <script type="text/javascript" src="api/api-ws.js"></script> 
+        <script type="text/javascript" src="api/api.js"></script>
+        <script type="text/javascript" src="nje.js"></script>
+        <script type="text/javascript">
+            let deckToMsgNumMapping = {
+                'A': 1,
+                'B': 2,
+                'C': 3,
+                'D': 4
+            };
+
+            // Called when track ends playing
+            function popTrack(meta) {
+                console.log("Pop track:", meta);
+                NJEPort.deleteMessage(NJEAttrs.MsgKind.Normal, deckToMsgNumMapping[meta.deck]);
+            }
+
+            // Called when new track plays
+            function pushTrack(meta) {
+                console.log("Push track:", meta);
+                var msg = new NJEFormattedString([
+                    new NJEFormattedSpan("♪", NJEAttrs.Color.Yellow)
+                ]);
+
+                if(meta.artist && meta.artist.length > 0) {
+                    msg.spans.push(new NJEFormattedSpan(meta.artist, NJEAttrs.Color.Red));
+                    if(meta.title && meta.title.length > 0) {
+                        msg.spans.push(new NJEFormattedSpan(" - ", NJEAttrs.Color.Yellow));
+                    }
+                }
+                if(meta.title && meta.title.length > 0) {
+                    msg.spans.push(new NJEFormattedSpan(meta.title, NJEAttrs.Color.Green));
+                }
+
+                msg.spans.push(new NJEFormattedSpan("♪", NJEAttrs.Color.Yellow));
+                NJEPort.setMessage(
+                    NJEAttrs.MsgKind.Normal, 
+                    deckToMsgNumMapping[meta.deck],
+                    msg
+                );
+            }
+
+            function startPort() {
+                NJEPort.init();
+                document.getElementById('startBtn').style.display = "none";
+                document.getElementById('hint').style.display = "none";
+            }
+
+            function setScrollSpeed() {
+                NJEPort.setScrollSpeed(scrollSel.value);
+            }
+
+            function setBlinkSpeed() {
+                NJEPort.setBlinkSpeed(blinkSel.value);
+            }
+
+            const CONST_MSG_NUM = 90;
+            function setConstMsg() {
+                if(constMsg.value.trim().length == 0) {
+                    NJEPort.deleteMessage(NJEAttrs.MsgKind.Normal, CONST_MSG_NUM);
+                } else {
+                    NJEPort.setMessage(NJEAttrs.MsgKind.Normal, CONST_MSG_NUM, constMsg.value.trim(), constColor.value, constDecor.value);
+                }
+            }
+
+            function reset() {
+                NJEPort.reset();
+            }
+
+            function loadSettings() {
+                constMsg.value = localStorage.getItem("constMsg") || "";
+                constColor.value = localStorage.getItem("constColor") || "A";
+                constDecor.value = localStorage.getItem("constDecor") || "A";
+            }
+
+            function saveSettings() {
+                localStorage.setItem("constMsg", constMsg.value);
+                localStorage.setItem("constColor", constColor.value);
+                localStorage.setItem("constDecor", constDecor.value);
+                return true;
+            }
+        </script>
+    </head>
+    <body onload="loadSettings()" onbeforeunload="saveSettings()">
+        <p id="hint">Connect NJE compatible VFD display to a serial port and click:</p>
+        <button onclick="startPort()" id="startBtn">Connect</button>
+        <hr>
+        <div id="options">
+            <button onclick="reset()">Reboot</button>
+            <br>
+            <span>Extra message (e.g. DJ name):</span>
+            <input type="text" id="constMsg" />
+            <select id="constColor">
+                <option value="A">Green</option>
+                <option value="B">Red</option>
+                <option value="C">Yellow</option>
+            </select>
+            <select id="constDecor">
+                <option value="A">Scroll</option>
+                <option value="B">Scroll + Blink</option>
+                <option value="C">Scroll + Invert</option>
+                <option value="D">Scroll + Blink + Invert</option>
+                <option value="E">Pull</option>
+                <option value="F">Pull + Blink</option>
+                <option value="G">Pull + Invert</option>
+                <option value="H">Pull + Blink + Invert</option>
+                <option value="I">Pause</option>
+                <option value="J">Pause + Blink</option>
+                <option value="K">Pause + Invert</option>
+                <option value="L">Pause + Blink + Invert</option>
+                <option value="W">Still</option>
+                <option value="X">Still + Blink</option>
+                <option value="Y">Still + Invert</option>
+                <option value="Z">Still + Blink + Invert</option>
+            </select>
+            <button onclick="setConstMsg()">Set</button>
+            <br>
+            <span>Scroll speed:</span>
+            <select onchange="setScrollSpeed()" id="scrollSel">
+                <option value="0">Slow</option>
+                <option value="1">Normal</option>
+                <option value="2">Fast</option>
+            </select>
+            <br>
+            <span>Blink speed:</span>
+            <select onchange="setBlinkSpeed()" id="blinkSel">
+                <option value="0">None</option>
+                <option value="1">Slow</option>
+                <option value="2">Normal</option>
+                <option value="3">Fast</option>
+            </select>
+            <br>
+        </div>
+    </body>
+</html>
