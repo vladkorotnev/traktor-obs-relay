@@ -1,6 +1,6 @@
 [package]
 name = "traktor-obs-relay"
-version = "0.1.0"
+version = "1.2.2"
 authors = ["akasaka <akasaka@somewhere>"]
 edition = "2018"
 

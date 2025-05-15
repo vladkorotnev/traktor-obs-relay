@@ -1,0 +1,85 @@
+name: Build production version
+
+on:
+  push:
+    branches: [master]
+    tags:
+      - "v*"
+
+concurrency:
+    group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+    cancel-in-progress: true
+    
+jobs:
+    build:
+      name: Build ${{ matrix.platform.target }}
+      strategy:
+        matrix:
+          platform:
+            - os-name: Windows-x86_64
+              runs-on: windows-latest
+              target: x86_64-pc-windows-msvc
+            - os-name: macOS-x86_64
+              runs-on: macOS-latest
+              target: x86_64-apple-darwin
+            - os-name: macOS-AppleSilicon
+              runs-on: macOS-latest
+              target: aarch64-apple-darwin
+      runs-on: ${{ matrix.platform.runs-on }}
+      steps:
+        - name: Checkout
+          uses: actions/checkout@v4
+        - name: Build binary
+          uses: houseabsolute/actions-rust-cross@v1
+          with:
+            command: build
+            target: ${{ matrix.platform.target }}
+            args: "--locked --release"
+            strip: true
+        - name: Upload temporary binary
+          uses: actions/upload-artifact@v4
+          with:
+            name: bin_${{ matrix.platform.target }}
+            path: target/${{ matrix.platform.target }}/release/traktor-obs-relay
+          if: endsWith(matrix.platform.target, '-apple-darwin')
+        - name: Upload temporary EXE
+          uses: actions/upload-artifact@v4
+          with:
+            name: bin_${{ matrix.platform.target }}
+            path: target/${{ matrix.platform.target }}/release/traktor-obs-relay.exe
+          if: endsWith(matrix.platform.target, '-windows-msvc')
+    package:
+      name: Package everything
+      runs-on: macOS-latest
+      needs: [build]
+      steps:
+        - name: Checkout
+          uses: actions/checkout@v4
+        - name: Download build artifacts
+          uses: actions/download-artifact@v4
+          with:
+            merge-multiple: false
+            path: /tmp
+        - name: Rename Windows binary
+          shell: bash
+          run: mv /tmp/bin_x86_64-pc-windows-msvc/traktor-obs-relay.exe traktor-obs-relay-windows.exe
+        - name: Create Apple universal binary
+          shell: bash
+          run: |
+            lipo -create /tmp/bin_x86_64-apple-darwin/traktor-obs-relay /tmp/bin_aarch64-apple-darwin/traktor-obs-relay -output traktor-obs-relay-macOS
+            chmod +x traktor-obs-relay-macOS
+            chmod +x start-macOS.sh
+        - name: Create ZIP
+          shell: bash
+          run: zip -r TraktorOBSRelay-${{ github.sha }}.zip traktor-obs-relay-windows.exe traktor-obs-relay-macOS start-macOS.sh start-windows.bat readme.md config.toml assets/
+        - name: Upload archive
+          uses: actions/upload-artifact@v4
+          with:
+            name: TraktorOBSRelay-${{ github.sha }}.zip
+            path: TraktorOBSRelay-${{ github.sha }}.zip
+        - name: Release
+          uses: softprops/action-gh-release@v2
+          if: github.ref_type == 'tag'
+          with:
+            files: |
+              TraktorOBSRelay-${{ github.sha }}.zip
